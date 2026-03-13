@@ -136,7 +136,7 @@ const submit = () => {
                         <div class="grid grid-cols-2 md:grid-cols-6 gap-4">
                             
                             <div v-for="(img, index) in form.existing_images" :key="'old-'+img.id" class="relative group aspect-square rounded-2xl overflow-hidden border border-gray-100">
-                                <img :src="'/storage/' + img.path" class="w-full h-full object-cover" />
+                                <img :src="'/storage/products/' + img.path" class="w-full h-full object-cover" />
                                 <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
                                     <button type="button" @click="removeExistingImage(index)" class="bg-white text-red-600 p-2 rounded-full shadow-lg hover:scale-110 transition">
                                         <X class="w-4 h-4" />

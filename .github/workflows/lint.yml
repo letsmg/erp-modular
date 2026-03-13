@@ -1,95 +1,95 @@
-name: Lint Codebase
+# name: Lint Codebase
 
-on:
+# on:
 
-  push:
+#   push:
 
-    branches:
+#     branches:
 
-      - develop
+#       - develop
 
-      - main
+#       - main
 
-      - master
+#       - master
 
-      - workos
+#       - workos
 
-  pull_request:
+#   pull_request:
 
-    branches:
+#     branches:
 
-      - develop
+#       - develop
 
-      - main
+#       - main
 
-      - master
+#       - master
 
-      - workos
-
-
-
-permissions:
-
-  contents: write
+#       - workos
 
 
 
-jobs:
+# permissions:
 
-  quality:
-
-    runs-on: ubuntu-latest
-
-    steps:
-
-      - uses: actions/checkout@v6
+#   contents: write
 
 
 
-      - name: Setup PHP
+# jobs:
 
-        uses: shivammathur/setup-php@v2
+#   quality:
 
-        with:
+#     runs-on: ubuntu-latest
 
-          php-version: '8.4'
+#     steps:
 
-
-
-      - name: Install Dependencies
-
-        run: |
-
-          composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
-
-          npm install
+#       - uses: actions/checkout@v6
 
 
 
-      - name: Run Pint
+#       - name: Setup PHP
 
-        run: composer lint
+#         uses: shivammathur/setup-php@v2
 
+#         with:
 
-
-      - name: Format Frontend
-
-        run: npm run format
+#           php-version: '8.4'
 
 
 
-      - name: Lint Frontend
+#       - name: Install Dependencies
 
-        run: npm run lint
+#         run: |
+
+#           composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
+
+#           npm install
 
 
 
-      # - name: Commit Changes
+#       - name: Run Pint
 
-      #   uses: stefanzweifel/git-auto-commit-action@v7
+#         run: composer lint
 
-      #   with:
 
-      #     commit_message: fix code style
 
-      #     commit_options: '--no-verify'
+#       - name: Format Frontend
+
+#         run: npm run format
+
+
+
+#       - name: Lint Frontend
+
+#         run: npm run lint
+
+
+
+#       # - name: Commit Changes
+
+#       #   uses: stefanzweifel/git-auto-commit-action@v7
+
+#       #   with:
+
+#       #     commit_message: fix code style
+
+#       #     commit_options: '--no-verify'

@@ -1,8 +1,19 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}"  @class(['dark' => ($appearance ?? 'system') == 'dark'])>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
-        @routes 
-        @vite(['resources/js/app.ts', "resources/js/pages/{$page['component']}.vue"])
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        {{-- Scripts de SEO Globais (Injetados via Middleware ou Compartilhados) --}}
+        @if(isset($seo_global))
+            {!! $seo_global->google_tag_manager !!}
+            {!! $seo_global->schema_markup !!}
+        @endif
+
+        <title inertia>{{ config('app.name', 'Laravel') }}</title>
+
+        @routes
+        @vite(['resources/js/app.js', "resources/js/Pages/{$page['component']}.vue"])
         @inertiaHead
     </head>
     <body class="font-sans antialiased">

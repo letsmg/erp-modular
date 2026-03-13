@@ -6,13 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class SeoMetadata extends Model
 {
-    protected $fillable = ['slug', 
-    'meta_title', 'meta_description', 'meta_keywords',  
-    'seoable_id', 'seoable_type'];
+    protected $fillable = [
+        'slug', 'meta_title', 'meta_description', 'meta_keywords', 
+        'canonical_url', 'h1', 'text1', 'h2', 'text2', 
+        'schema_markup', 'google_tag_manager', 'ads', 
+        'seoable_id', 'seoable_type'
+    ];
 
     public function seoable()
     {
-        // Esse método permite que o SEO descubra a quem ele pertence
         return $this->morphTo();
     }
 }

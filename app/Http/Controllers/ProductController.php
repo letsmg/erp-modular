@@ -33,22 +33,31 @@ class ProductController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'supplier_id'      => 'required|exists:suppliers,id',
-            'description'      => 'required|string|max:255',            
-            'brand'            => 'nullable|string|max:100',
-            'model'            => 'nullable|string|max:100',
-            'cost_price'       => 'required|numeric|min:0',
-            'sale_price'       => 'required|numeric|min:0',
-            'stock_quantity'   => 'required|integer|min:0',
-            'is_active'        => 'boolean',
-            'meta_title'       => 'nullable|string|max:70',
-            'meta_description' => 'nullable|string|max:160',
-            'images'           => 'required|array|min:1|max:6',
-            'images.*'         => 'image|mimes:jpg,jpeg,png|max:2048', 
+            'supplier_id'        => 'required|exists:suppliers,id',
+            'description'       => 'required|string|max:255',            
+            'brand'             => 'nullable|string|max:100',
+            'model'             => 'nullable|string|max:100',
+            'cost_price'        => 'required|numeric|min:0',
+            'sale_price'        => 'required|numeric|min:0',
+            'stock_quantity'    => 'required|integer|min:0',
+            'is_active'         => 'boolean',
+            // Novos campos de SEO
+            'meta_title'        => 'nullable|string|max:70',
+            'meta_description'  => 'nullable|string|max:160',
+            'meta_keywords'     => 'nullable|string',
+            'canonical_url'     => 'nullable|url',
+            'h1'                => 'nullable|string',
+            'text1'             => 'nullable|string',
+            'h2'                => 'nullable|string',
+            'text2'             => 'nullable|string',
+            'schema_markup'     => 'nullable|string',
+            'google_tag_manager'=> 'nullable|string',
+            'ads'               => 'nullable|string',
+            'images'            => 'required|array|min:1|max:6',
+            'images.*'          => 'image|mimes:jpg,jpeg,png|max:2048', 
         ]);
 
         return DB::transaction(function () use ($request, $data) {
-            // Gerar slug do produto
             $data['slug'] = Str::slug($data['description']) . '-' . Str::lower(Str::random(5));
             $product = Product::create($data);
 
@@ -60,16 +69,25 @@ class ProductController extends Controller
                         ]);
                     }
                     $path = $file->store('products', 'public');
-                    $product->images()->create(['path' => $path]);
+                    // Ajuste: Salvando apenas o nome do arquivo para o banco ficar limpo
+                    $product->images()->create(['path' => basename($path)]);
                 }
             }
 
-            // CORREÇÃO: Enviando o slug para o SEO
-            $seoTitle = $data['meta_title'] ?? $data['description'];
+            // Integração completa com SeoMetadata
             $product->seo()->create([
-                'meta_title'       => $seoTitle,
-                'meta_description' => $data['meta_description'] ?? null,
-                'slug'             => Str::slug($seoTitle) . '-' . time(), // Gerando slug único
+                'slug'               => $product->slug,
+                'meta_title'         => $data['meta_title'] ?? $data['description'],
+                'meta_description'   => $data['meta_description'] ?? null,
+                'meta_keywords'      => $data['meta_keywords'] ?? null,
+                'canonical_url'      => $data['canonical_url'] ?? null,
+                'h1'                 => $data['h1'] ?? $data['description'],
+                'text1'              => $data['text1'] ?? null,
+                'h2'                 => $data['h2'] ?? null,
+                'text2'              => $data['text2'] ?? null,
+                'schema_markup'      => $data['schema_markup'] ?? null,
+                'google_tag_manager' => $data['google_tag_manager'] ?? null,
+                'ads'                => $data['ads'] ?? null,
             ]);
 
             return redirect()->route('products.index')->with('message', 'Produto cadastrado com sucesso!');
@@ -87,18 +105,22 @@ class ProductController extends Controller
     public function update(Request $request, Product $product)
     {
         $data = $request->validate([
-            'supplier_id'      => 'required|exists:suppliers,id',
-            'description'      => 'required|string|max:255',
-            'cost_price'       => 'required|numeric|min:0',
-            'sale_price'       => 'required|numeric|min:0',
-            'stock_quantity'   => 'required|integer|min:0',
-            'is_active'        => 'boolean',
-            'is_featured'      => 'boolean',
-            'meta_title'       => 'nullable|string|max:70',
-            'meta_description' => 'nullable|string|max:160',
-            'existing_images'  => 'nullable|array', 
-            'new_images'       => 'nullable|array|max:6',
-            'new_images.*'     => 'image|mimes:jpg,jpeg,png|max:2048',
+            'supplier_id'        => 'required|exists:suppliers,id',
+            'description'       => 'required|string|max:255',
+            'cost_price'        => 'required|numeric|min:0',
+            'sale_price'        => 'required|numeric|min:0',
+            'stock_quantity'    => 'required|integer|min:0',
+            'is_active'         => 'boolean',
+            'is_featured'       => 'boolean',
+            'meta_title'        => 'nullable|string|max:70',
+            'meta_description'  => 'nullable|string|max:160',
+            'meta_keywords'     => 'nullable|string',
+            'h1'                => 'nullable|string',
+            'schema_markup'     => 'nullable|string',
+            'google_tag_manager'=> 'nullable|string',
+            'existing_images'   => 'nullable|array', 
+            'new_images'        => 'nullable|array|max:6',
+            'new_images.*'      => 'image|mimes:jpg,jpeg,png|max:2048',
         ]);
 
         $totalImages = count($request->existing_images ?? []) + count($request->file('new_images') ?? []);
@@ -111,7 +133,8 @@ class ProductController extends Controller
             $imagesToDelete = $product->images()->whereNotIn('id', $existingIds)->get();
 
             foreach ($imagesToDelete as $oldImg) {
-                Storage::disk('public')->delete($oldImg->path);
+                // Ajuste para o path que agora é salvo sem o prefixo 'products/'
+                Storage::disk('public')->delete('products/' . $oldImg->path);
                 $oldImg->delete();
             }
 
@@ -123,7 +146,7 @@ class ProductController extends Controller
                         ]);
                     }
                     $path = $file->store('products', 'public');
-                    $product->images()->create(['path' => $path]);
+                    $product->images()->create(['path' => basename($path)]);
                 }
             }
 
@@ -133,14 +156,22 @@ class ProductController extends Controller
 
             $product->update($data);
 
-            // CORREÇÃO: Enviando o slug no UpdateOrCreate para o SEO
-            $seoTitle = $data['meta_title'] ?? $data['description'];
+            // Update de SEO com TODOS os campos integrados
             $product->seo()->updateOrCreate(
                 ['seoable_id' => $product->id, 'seoable_type' => get_class($product)],
                 [
-                    'meta_title'       => $seoTitle,
-                    'meta_description' => $data['meta_description'] ?? null,
-                    'slug'             => Str::slug($seoTitle) . '-' . time(),
+                    'slug'               => $product->slug,
+                    'meta_title'         => $request->meta_title ?? $data['description'],
+                    'meta_description'   => $request->meta_description ?? null,
+                    'meta_keywords'      => $request->meta_keywords ?? null,
+                    'canonical_url'      => $request->canonical_url ?? null,
+                    'h1'                 => $request->h1 ?? $data['description'],
+                    'text1'              => $request->text1 ?? null,
+                    'h2'                 => $request->h2 ?? null,
+                    'text2'              => $request->text2 ?? null,
+                    'schema_markup'      => $request->schema_markup ?? null,
+                    'google_tag_manager' => $request->google_tag_manager ?? null,
+                    'ads'                => $request->ads ?? null,
                 ]
             );
 
@@ -148,14 +179,38 @@ class ProductController extends Controller
         });
     }
 
+
+
+
     public function destroy(Product $product)
     {
-        foreach ($product->images as $img) {
-            Storage::disk('public')->delete($img->path);
+        // Garante que as imagens sejam carregadas, mesmo que o relacionamento esteja bugado
+        $images = $product->images()->get();
+
+        if ($images && $images->count() > 0) {
+            foreach ($images as $img) {
+                // Verificamos se o arquivo existe antes de tentar deletar
+                // Usamos 'products/' . $img->path porque agora o banco só guarda o nome puro
+                if (Storage::disk('public')->exists('products/' . $img->path)) {
+                    Storage::disk('public')->delete('products/' . $img->path);
+                }
+                
+                $img->delete();
+            }
         }
+
+        // Opcional: Deletar o SEO antes do produto (embora o cascade do banco costume resolver)
+        if ($product->seo) {
+            $product->seo->delete();
+        }
+
         $product->delete();
-        return redirect()->route('products.index')->with('message', 'Produto removido.');
+
+        return redirect()->route('products.index')->with('message', 'Produto removido com sucesso.');
     }
+
+
+
 
     private function isImageSafe($image)
     {

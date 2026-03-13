@@ -7,6 +7,7 @@ use App\Http\Controllers\ProductController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\SitemapController;
+use App\Http\Controllers\ReportController;
 
 
 // --- ROTAS PÚBLICAS (Visitantes) ---
@@ -31,6 +32,9 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('products', ProductController::class);        
         
     Route::resource('suppliers', SupplierController::class);
+    
+    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/products', [ReportController::class, 'products'])->name('reports.products');
 
     // --- ÁREA DO ADMINISTRADOR ---
     Route::middleware([\App\Http\Middleware\AdminMiddleware::class])->group(function () {

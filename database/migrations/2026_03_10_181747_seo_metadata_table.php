@@ -18,6 +18,13 @@ return new class extends Migration
             $table->string('meta_description', 160)->nullable();
             $table->string('meta_keywords')->nullable();
             $table->string('canonical_url')->nullable();
+            $table->string('h1')->nullable();       
+            $table->text('text1')->nullable();      
+            $table->string('h2')->nullable();
+            $table->text('text2')->nullable();
+            $table->text('schema_markup')->nullable();
+            $table->text('google_tag_manager')->nullable();
+            $table->text('ads')->nullable();
             $table->string('slug')->unique();
             $table->timestamps();
         });

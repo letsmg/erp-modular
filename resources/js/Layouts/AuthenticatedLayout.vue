@@ -2,7 +2,8 @@
 import { Link, usePage } from '@inertiajs/vue3';
 import { 
     LayoutDashboard, Users, Package, Truck, 
-    LogOut, CheckCircle2, X, AlertTriangle 
+    LogOut, CheckCircle2, X, AlertTriangle ,
+    FileBarChart
 } from 'lucide-vue-next';
 import { ref, watch, onMounted, onUnmounted, computed } from 'vue';
 
@@ -103,6 +104,15 @@ const isUrl = (url) => page.url === url || page.url.startsWith(url + '/');
                     <span class="font-bold text-sm">Fornecedores</span>
                 </Link>
             </nav>
+
+            <p class="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] px-3 mb-4 mt-8">Relatórios</p>
+
+            <Link :href="route('reports.index')" 
+                :class="[isUrl('/reports') ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-600/20' : 'text-slate-400 hover:bg-slate-900 hover:text-slate-100']"
+                class="flex items-center space-x-3 p-3 rounded-xl transition-all cursor-pointer group">
+                <FileBarChart class="w-5 h-5" />
+                <span class="font-bold text-sm">Gerar Relatórios</span>
+            </Link>
 
             <div class="p-4 border-t border-slate-900 bg-slate-950/50">
                 <Link :href="route('logout')" method="post" as="button" class="flex items-center space-x-3 p-3 w-full text-slate-500 hover:text-red-400 hover:bg-red-500/5 rounded-xl transition-all text-left group cursor-pointer font-bold text-sm">
