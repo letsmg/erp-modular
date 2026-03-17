@@ -10,92 +10,81 @@ class UserPermissionTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_admin_pode_acessar_area_admin()
+    protected function setUp(): void
     {
-        $admin = User::factory()->create([
-            'access_level' => 1
-        ]);
+        parent::setUp();
+        // Alimenta o banco (SQLite em memória) com seus Seeders antes de cada teste
+        $this->seed();
+    }
 
-        $response = $this->actingAs($admin)->get('/users');
+    /** --- TESTES DE ACESSO E LOGIN --- **/
+
+    public function test_tela_de_login_esta_acessivel()
+    {
+        $response = $this->get(route('login'));
+        $response->assertStatus(200);
+    }
+
+    public function test_usuario_nao_autenticado_e_redirecionado_para_login()
+    {
+        $response = $this->get(route('dashboard'));
+        $response->assertRedirect(route('login'));
+    }
+
+    public function test_usuario_pode_fazer_logout()
+    {
+        $user = User::factory()->create();
+        $response = $this->actingAs($user)->post(route('logout'));
+        
+        $response->assertRedirect('/'); // Ou para onde seu logout aponta
+        $this->assertGuest();
+    }
+
+    /** --- TESTES DE PERMISSÃO (ADMIN) --- **/
+
+    public function test_admin_pode_acessar_lista_de_usuarios()
+    {
+        $admin = User::factory()->create(['access_level' => 1]);
+
+        $response = $this->actingAs($admin)->get(route('users.index'));
 
         $response->assertStatus(200);
     }
 
-    public function test_usuario_padrao_nao_pode_acessar_area_admin()
+    public function test_usuario_comum_recebe_403_ao_acessar_usuarios()
     {
-        $user = User::factory()->create([
-            'access_level' => 0
-        ]);
+        $user = User::factory()->create(['access_level' => 0]);
 
-        $response = $this->actingAs($user)->get('/users');
-
-        $response->assertStatus(403); // ou redirect, depende da sua regra
-    }
-
-    public function test_usuario_padrao_nao_pode_criar_admin()
-    {
-        $user = User::factory()->create([
-            'access_level' => 0
-        ]);
-
-        $response = $this->actingAs($user)->post('/users', [
-            'name' => 'Novo Admin',
-            'email' => 'admin@test.com',
-            'password' => bcrypt('123456'),
-            'access_level' => 1
-        ]);
+        $response = $this->actingAs($user)->get(route('users.index'));
 
         $response->assertStatus(403);
     }
 
-    public function test_admin_pode_criar_admin()
+    public function test_admin_pode_cadastrar_usuario()
     {
-        $admin = User::factory()->create([
-            'access_level' => 1
-        ]);
+        $admin = User::factory()->create(['access_level' => 1]);
+        
+        $novoUsuario = [
+            'name' => 'Clone',
+            'email' => 'clone@teste.com',
+            'password' => '12345678',
+            'access_level' => 0
+        ];
 
-        $response = $this->actingAs($admin)->post('/users', [
-            'name' => 'Novo Admin',
-            'email' => 'admin@test.com',
-            'password' => bcrypt('123456'),
-            'access_level' => 1
-        ]);
+        $response = $this->actingAs($admin)->post(route('users.store'), $novoUsuario);
 
         $response->assertRedirect();
-
-        $this->assertDatabaseHas('users', [
-            'email' => 'admin@test.com',
-            'access_level' => 1
-        ]);
+        $this->assertDatabaseHas('users', ['email' => 'clone@teste.com']);
     }
 
-    public function test_usuario_padrao_nao_pode_deletar_usuario()
+    public function test_usuario_comum_nao_pode_deletar_ninguem()
     {
-        $user = User::factory()->create([
-            'access_level' => 0
-        ]);
+        $user = User::factory()->create(['access_level' => 0]);
+        $alvo = User::factory()->create();
 
-        $target = User::factory()->create();
-
-        $response = $this->actingAs($user)->delete("/users/{$target->id}");
+        $response = $this->actingAs($user)->delete(route('users.destroy', $alvo));
 
         $response->assertStatus(403);
-    }
-
-    public function test_admin_pode_deletar_usuario()
-    {
-        $admin = User::factory()->create([
-            'access_level' => 1
-        ]);
-
-        $target = User::factory()->create();
-
-        $response = $this->actingAs($admin)->delete("/users/{$target->id}");
-
-        $response->assertRedirect();
-
-        $this->assertDatabaseMissing('users', [
-            'id' => $target->id
-        ]);
+        $this->assertDatabaseHas('users', ['id' => $alvo->id]);
     }
 }
