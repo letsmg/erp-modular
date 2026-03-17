@@ -13,10 +13,7 @@
         <title inertia>{{ config('app.name', 'Laravel') }}</title>
 
         @routes
-        @vite([
-            app()->environment('local') ? 'resources/js/app.ts' : 'resources/js/app.js', 
-            "resources/js/Pages/{$page['component']}.vue"
-        ])
+            @vite(['resources/js/app.ts'])
         @inertiaHead
     </head>
     <body class="font-sans antialiased">
