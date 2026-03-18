@@ -95,12 +95,17 @@ class SupplierTest extends TestCase
 
     public function test_usuario_pode_excluir_fornecedor()
     {
+        // 1. Cria usuários e fornecedores de forma simplificada
         $user = User::factory()->create();
         $supplier = Supplier::factory()->create();
 
+        // 2. Executa a deleção
         $response = $this->actingAs($user)->delete(route('suppliers.destroy', $supplier));
 
+        // 3. Verificações rápidas
         $response->assertRedirect(route('suppliers.index'));
-        $this->assertDatabaseMissing('suppliers', ['id' => $supplier->id]);
+        
+        // assertModelMissing é mais rápido e moderno que assertDatabaseMissing para instâncias de Model
+        $this->assertModelMissing($supplier);
     }
 }
