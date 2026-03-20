@@ -75,7 +75,7 @@ jobs:
             php artisan view:cache
             
             echo "🗄️ Migrations..."
-            php artisan migrate --force
+            php artisan migrate --force --seed
 
             echo "🔐 Restaurando permissões de produção..."
             sudo chown -R www-data:www-data /var/www/erp
