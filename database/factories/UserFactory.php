@@ -17,12 +17,12 @@ class UserFactory extends Factory
     protected static ?string $password;
 
     /**
-     * Define o estado padrão do modelo.
+     * Estado padrão do modelo.
      */
     public function definition(): array
     {
         return [
-            'name' => $this->faker->name(),           // Faker sempre assim
+            'name' => $this->faker->name(), // <- usa $this->faker corretamente
             'email' => $this->faker->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('Mudar@123'),
@@ -32,9 +32,6 @@ class UserFactory extends Factory
         ];
     }
 
-    /**
-     * Email não verificado.
-     */
     public function unverified(): static
     {
         return $this->state(fn (array $attributes) => [
@@ -42,9 +39,6 @@ class UserFactory extends Factory
         ]);
     }
 
-    /**
-     * Usuário admin.
-     */
     public function admin(): static
     {
         return $this->state(fn (array $attributes) => [
@@ -52,9 +46,6 @@ class UserFactory extends Factory
         ]);
     }
 
-    /**
-     * Usuário inativo.
-     */
     public function inactive(): static
     {
         return $this->state(fn (array $attributes) => [
