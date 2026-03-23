@@ -22,7 +22,7 @@ class UserSeeder extends Seeder
             ['email' => 'admin@teste.com'], // Busca por este campo
             [
                 'name' => 'Admin',
-                'password' => Hash::make('[SenhaNova2026]'),
+                'password' => Hash::make('Mudar@123'),
                 'access_level' => 1,
                 'is_active' => true,
                 'email_verified_at' => now(),

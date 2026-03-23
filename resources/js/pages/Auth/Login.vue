@@ -11,7 +11,7 @@ defineProps({
 
 const form = useForm({
     email: '1@1.com',
-    password: '[SenhaNova2026]',
+    password: 'Mudar@123',
     remember: false,
 });
 
@@ -41,7 +41,7 @@ const submit = () => {
             </div>
             
             <div class="text-center mb-8">
-                <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight">ERP Zenite</h2>
+                <h2 class="text-3xl font-extrabold text-gray-900 tracking-tight">ERP Vue Laravel</h2>
                 <p class="text-sm text-gray-500 mt-2">Identificação de acesso protegida</p>
             </div>
 

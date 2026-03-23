@@ -10,7 +10,6 @@ use App\Http\Controllers\StoreController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-
 // 1. VITRINE (Pública para todos)
 
 Route::get('/sitemap.xml', [SitemapController::class, 'index']);
@@ -34,6 +33,10 @@ Route::middleware(['auth'])->group(function () {
 
     // Gerenciamento (Agora protegidos!)
     Route::resource('products', ProductController::class);
+    Route::get('/products/{product}/preview', [ProductController::class, 'preview'])->name('products.preview');
+    Route::patch('/products/{product}/toggle', [ProductController::class, 'toggle'])
+    ->name('products.toggle');
+    
     Route::resource('suppliers', SupplierController::class);
     
     // Relatórios

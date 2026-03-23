@@ -95,6 +95,30 @@ class ProductController extends Controller
             return redirect()->route('products.index')->with('message', 'Produto atualizado!');
         });
     }
+    
+
+    public function preview(Product $product)
+    {
+        return Inertia::render('Products/Preview', [
+            'product' => $product->load(['images', 'seo']), // Carrega as fotos e o SEO
+            'relatedProducts' => Product::where('brand', $product->brand)
+                ->where('id', '!=', $product->id)
+                ->with('images') // Também carrega fotos dos relacionados
+                ->limit(4)
+                ->get()
+        ]);
+    }
+
+    public function toggle(Product $product)
+    {
+        $product->update([
+            'is_active' => !$product->is_active
+        ]);
+
+        // Retorna para a mesma página atualizando os dados via Inertia
+        return back()->with('message', 'Status atualizado com sucesso!');
+    }
+
 
     public function destroy(Product $product)
     {
