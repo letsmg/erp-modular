@@ -1,10 +1,10 @@
 <script setup>
 import StoreLayout from '@/Layouts/StoreLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
-import { useStoreIndex } from './useStoreIndex'; // Certifique-se do caminho correto
+import { useStoreIndex } from './useStoreIndex';
 import { 
     SlidersHorizontal, ShoppingBag, ChevronLeft, 
-    ChevronRight, X, ExternalLink 
+    ChevronRight, X, ExternalLink, ShieldCheck 
 } from 'lucide-vue-next';
 
 const props = defineProps({
@@ -13,17 +13,16 @@ const props = defineProps({
     onSaleProducts: Array,
     ads: Array,
     brands: Array,
-    categories: Array, // Se houver categorias no banco
+    categories: Array,
     filters: Object
 });
 
-// Extraímos tudo do nosso arquivo JS
 const { 
     search, minPrice, maxPrice, brand, category,
     isModalOpen, selectedProduct, openDetails, closeModal,
-    scroll, seoData
+    showTermsModal, termsAccepted, acceptTerms,
+    scroll, seoData 
 } = useStoreIndex(props);
-
 </script>
 
 <template>
@@ -130,10 +129,10 @@ const {
             enter-active-class="duration-300 ease-out" enter-from-class="opacity-0 scale-95" enter-to-class="opacity-100 scale-100"
             leave-active-class="duration-200 ease-in" leave-from-class="opacity-100 scale-100" leave-to-class="opacity-0 scale-95"
         >
-            <div v-if="isModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 bg-slate-900/80 backdrop-blur-md" @click.self="isModalOpen = false">
+            <div v-if="isModalOpen" class="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-6 bg-slate-900/80 backdrop-blur-md" @click.self="closeModal">
                 <div class="bg-white w-full max-w-4xl rounded-[2rem] md:rounded-[3rem] overflow-hidden shadow-2xl flex flex-col md:flex-row relative max-h-[90vh] overflow-y-auto md:overflow-hidden">
                     
-                    <button @click="isModalOpen = false" class="absolute top-4 right-4 md:top-6 md:right-6 p-2 bg-slate-100 rounded-full hover:bg-red-50 text-slate-900 transition z-10">
+                    <button @click="closeModal" class="absolute top-4 right-4 md:top-6 md:right-6 p-2 bg-slate-100 rounded-full hover:bg-red-50 text-slate-900 transition z-10">
                         <X class="w-5 h-5"/>
                     </button>
 
@@ -146,11 +145,7 @@ const {
                         <span class="text-indigo-600 text-[10px] font-black uppercase tracking-[0.2em] mb-2">{{ seoData.title }}</span>
                         <h2 class="text-2xl md:text-4xl font-black text-slate-900 mb-2 leading-tight">{{ selectedProduct?.description }}</h2>
                         
-                        <Link 
-                            v-if="selectedProduct?.seo?.slug"
-                            :href="route('store.product', selectedProduct.seo.slug)"
-                            class="flex items-center gap-1 text-[10px] font-bold text-slate-400 hover:text-indigo-600 transition mb-6 uppercase tracking-widest group"
-                        >
+                        <Link v-if="selectedProduct?.seo?.slug" :href="route('store.product', selectedProduct.seo.slug)" class="flex items-center gap-1 text-[10px] font-bold text-slate-400 hover:text-indigo-600 transition mb-6 uppercase tracking-widest group">
                             Ver descrição completa
                             <ExternalLink class="w-3 h-3 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
                         </Link>
@@ -161,16 +156,55 @@ const {
                             <button class="w-full bg-slate-900 text-white py-4 md:py-5 rounded-xl md:rounded-2xl font-black uppercase flex items-center justify-center gap-3 hover:bg-indigo-600 transition shadow-xl">
                                 <ShoppingBag /> Adicionar à Sacola
                             </button>
-
-                            <Link 
-                                v-if="selectedProduct?.seo?.slug"
-                                :href="route('store.product', selectedProduct.seo.slug)"
-                                class="w-full bg-slate-50 text-slate-600 py-3 rounded-xl font-bold uppercase text-[10px] flex items-center justify-center gap-2 hover:bg-slate-100 transition"
-                            >
-                                Ficha Técnica & Detalhes
-                            </Link>
                         </div>
                     </div>
+                </div>
+            </div>
+        </Transition>
+
+        <Transition
+            enter-active-class="duration-500 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100"
+        >
+            <div v-if="showTermsModal" class="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/95 backdrop-blur-2xl">
+                <div class="bg-white w-full max-w-lg rounded-[2.5rem] p-8 md:p-10 shadow-2xl border border-slate-100">
+                    
+                    <div class="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-6">
+                        <ShieldCheck class="w-7 h-7" />
+                    </div>
+
+                    <h2 class="text-2xl font-black text-slate-900 mb-4 tracking-tighter uppercase italic">
+                        Segurança & Termos
+                    </h2>
+
+                    <div class="space-y-4 text-slate-600 text-sm mb-8 leading-relaxed">
+                        <p>
+                            Este sistema coleta seu <b>endereço IP</b> para fins de auditoria e segurança cibernética (LGPD).
+                        </p>
+                        <p>
+                            Ao continuar, você concorda com nossos 
+                            <a href="/storage/termos_de_uso.pdf" target="_blank" class="text-indigo-600 font-black underline">
+                                Termos de Uso
+                            </a>.
+                        </p>
+                    </div>
+
+                    <div class="bg-slate-50 p-5 rounded-2xl border border-slate-100 mb-8">
+                        <label class="flex items-start gap-3 cursor-pointer">
+                            <input type="checkbox" v-model="termsAccepted" class="mt-1 h-5 w-5 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
+                            <span class="text-[11px] font-black text-slate-700 uppercase leading-snug tracking-tight">
+                                Eu li e concordo com a política de auditoria e os termos de uso do sistema.
+                            </span>
+                        </label>
+                    </div>
+
+                    <button 
+                        @click="acceptTerms"
+                        :disabled="!termsAccepted"
+                        class="w-full py-5 rounded-2xl font-black uppercase tracking-widest text-xs transition-all"
+                        :class="termsAccepted ? 'bg-slate-900 text-white shadow-xl hover:bg-indigo-600' : 'bg-slate-100 text-slate-300 cursor-not-allowed'"
+                    >
+                        Confirmar Aceite
+                    </button>
                 </div>
             </div>
         </Transition>

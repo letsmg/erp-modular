@@ -3,6 +3,8 @@ import { router, usePage } from '@inertiajs/vue3';
 import { debounce } from 'lodash';
 
 export function useStoreIndex(props) {
+    const page = usePage();
+
     // --- FILTROS ---
     const search = ref(props.filters?.search || '');
     const minPrice = ref(props.filters?.min_price || '');
@@ -12,7 +14,6 @@ export function useStoreIndex(props) {
 
     const filterProducts = debounce(() => {
         const searchTerm = search.value.length > 0 && search.value.length < 3 ? '' : search.value;
-
         router.get(route('store.index'), {
             search: searchTerm,
             min_price: minPrice.value,
@@ -26,11 +27,9 @@ export function useStoreIndex(props) {
         });
     }, 500);
 
-    watch([search, minPrice, maxPrice, brand, category], () => {
-        filterProducts();
-    });
+    watch([search, minPrice, maxPrice, brand, category], () => filterProducts());
 
-    // --- MODAL ---
+    // --- MODAL DE PRODUTO ---
     const isModalOpen = ref(false);
     const selectedProduct = ref(null);
 
@@ -42,6 +41,26 @@ export function useStoreIndex(props) {
     const closeModal = () => {
         isModalOpen.value = false;
         selectedProduct.value = null;
+    };
+
+    // --- MODAL DE TERMOS (LGPD) ---
+    const showTermsModal = ref(false);
+    const termsAccepted = ref(false);
+
+    const acceptTerms = () => {
+        if (termsAccepted.value) {
+            localStorage.setItem('erp_terms_accepted', 'true');
+            showTermsModal.value = false;
+        }
+    };
+
+    // --- ATALHO DE TECLADO (CTRL + M) ---
+    const handleKeyDown = (event) => {
+        // Verifica se Ctrl + M (ou Cmd + M no Mac) foi pressionado
+        if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'm') {
+            event.preventDefault();
+            showTermsModal.value = true;
+        }
     };
 
     // --- CARROSSEL ---
@@ -58,16 +77,27 @@ export function useStoreIndex(props) {
         }
     };
 
+    // --- CICLO DE VIDA ---
     onMounted(() => { 
+        // Checagem automática de Termos ao carregar
+        if (!localStorage.getItem('erp_terms_accepted')) {
+            showTermsModal.value = true;
+        }
+
+        // Adiciona ouvinte para o atalho de teclado
+        window.addEventListener('keydown', handleKeyDown);
+
+        // Timer do carrossel
         timer = setInterval(() => scroll('hero-carousel', 'right'), 7000); 
     });
 
-    onUnmounted(() => {
-        if (timer) clearInterval(timer);
+    onUnmounted(() => { 
+        // Remove ouvintes e timers para evitar memory leaks
+        window.removeEventListener('keydown', handleKeyDown);
+        if (timer) clearInterval(timer); 
     });
 
     // --- SEO ---
-    const page = usePage();
     const seoData = computed(() => {
         return page.props.store_seo ?? {
             title: "Vitrine Premium",
@@ -78,13 +108,9 @@ export function useStoreIndex(props) {
     });
 
     return {
-        // Filtros
         search, minPrice, maxPrice, brand, category,
-        // Modal
         isModalOpen, selectedProduct, openDetails, closeModal,
-        // Carrossel
-        scroll,
-        // SEO
-        seoData
+        showTermsModal, termsAccepted, acceptTerms,
+        scroll, seoData
     };
 }

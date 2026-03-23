@@ -50,6 +50,7 @@ O projeto foca em **simplicidade sem perder escalabilidade**.
 # ⚡ Experiência do Desenvolvedor (DX)
 
 Para acelerar desenvolvimento e testes, o sistema possui utilitários globais de formulário.
+Para realizar testes localmente verifique a config no arquivo phpunit.xml
 
 ## Atalhos de Teclado
 
@@ -263,6 +264,7 @@ The project focuses on **simplicity without sacrificing scalability**.
 # ⚡ Developer Experience (DX)
 
 To accelerate development and testing, the system includes global form utilities.
+To perform tests locally, check the configuration in the phpunit.xml file.
 
 ## Keyboard Shortcuts
 
