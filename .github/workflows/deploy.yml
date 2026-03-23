@@ -41,8 +41,8 @@ jobs:
             git pull origin main
 
             echo "📦 Dependências e Build..."
-            composer install --no-dev --optimize-autoloader
-            npm install
+            composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-progress
+            npm install --quiet
             npm run build
 
             echo "🧹 Otimização Laravel..."
