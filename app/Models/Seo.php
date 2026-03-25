@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Seo extends Model
 {
-    // Adicionei o nome da tabela caso o Laravel não a encontre automaticamente como 'seo'
     protected $table = 'seo';
 
     protected $fillable = [
@@ -18,27 +17,23 @@ class Seo extends Model
     ];
 
     /**
-     * Relacionamento Polimórfico
+     * IMPORTANTE: Faz o Laravel entender meta_keywords como Array 
+     * em vez de uma string pura.
      */
+    protected $casts = [
+        'meta_keywords' => 'array',
+    ];
+
     public function seoable(): MorphTo
     {
         return $this->morphTo();
     }
 
-    /**
-     * 💡 ACESSOR DE TÍTULO (Opcional, mas recomendado)
-     * Se o meta_title estiver vazio no banco, ele tenta retornar o H1.
-     * Isso ajuda a evitar o erro de 'undefined' no seu Index.vue.
-     */
     public function getMetaTitleAttribute($value)
     {
         return $value ?: $this->h1;
     }
 
-    /**
-     * 💡 ACESSOR DE DESCRIÇÃO
-     * Retorna um texto padrão se não houver meta_description.
-     */
     public function getMetaDescriptionAttribute($value)
     {
         return $value ?: 'Confira os detalhes deste produto em nossa loja oficial.';

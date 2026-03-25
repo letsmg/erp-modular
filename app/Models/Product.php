@@ -18,17 +18,23 @@ class Product extends Model
         'collection', 'gender', 'cost_price', 'sale_price', 
         'promo_price', 'promo_start_at', 'promo_end_at',
         'barcode', 'stock_quantity', 'is_active', 'is_featured',
-        'slug'
+        'slug',
+        // Novos campos de frete
+        'weight', 'width', 'height', 'length', 'free_shipping'
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'is_featured' => 'boolean',
+        'free_shipping' => 'boolean', // Cast para o novo campo
         'promo_start_at' => 'datetime',
         'promo_end_at' => 'datetime',
+        'weight' => 'decimal:3',
+        'width' => 'decimal:2',
+        'height' => 'decimal:2',
+        'length' => 'decimal:2',
     ];
 
-    // Faz o current_price aparecer automaticamente no Vue/Inertia
     protected $appends = ['current_price', 'seo_display'];
 
     public function supplier(): BelongsTo
@@ -38,7 +44,6 @@ class Product extends Model
 
     public function images(): HasMany
     {
-        // Ordena por 'order' se você tiver esse campo, para as fotos não embaralharem
         return $this->hasMany(ProductImage::class)->orderBy('id', 'asc');
     }
 
@@ -68,12 +73,12 @@ class Product extends Model
 
     public function getSeoDisplayAttribute()
     {
-        $seo = $this->seo; // Relacionamento MorphOne
+        $seo = $this->seo;
 
         return [
             'meta_title'       => $seo?->meta_title ?: $this->description,
             'meta_description' => $seo?->meta_description ?: "Confira {$this->description} com o melhor preço na nossa loja.",
-            'slug'             => $seo?->slug ?: $this->slug, // Usa o slug do produto se o do SEO sumir
+            'slug'             => $seo?->slug ?: $this->slug,
             'h1'               => $seo?->h1 ?: $this->description,
             'meta_keywords'    => $seo?->meta_keywords ?: str_replace(' ', ', ', $this->description),
         ];

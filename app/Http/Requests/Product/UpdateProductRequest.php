@@ -14,7 +14,7 @@ class UpdateProductRequest extends FormRequest
     public function rules(): array
     {
         return [
-            // Dados Básicos (Sempre validados no Update)
+            // Dados Básicos
             'supplier_id'    => 'required|exists:suppliers,id',
             'description'     => 'required|string|max:255',            
             'brand'           => 'nullable|string|max:100',
@@ -23,11 +23,16 @@ class UpdateProductRequest extends FormRequest
             'sale_price'      => 'required|numeric|min:0',
             'stock_quantity'  => 'required|integer|min:0',
             
-            // Status e Destaque (Agora permitidos na edição)
+            // Status, Destaque e Logística
             'is_active'       => 'boolean',
             'is_featured'     => 'boolean',
+            'free_shipping'   => 'boolean',
+            'weight'          => 'required|numeric|min:0',
+            'width'           => 'required|numeric|min:0',
+            'height'          => 'required|numeric|min:0',
+            'length'          => 'required|numeric|min:0',
 
-            // SEO (Nullable)
+            // SEO
             'meta_title'        => 'nullable|string|max:70',
             'meta_description'  => 'nullable|string|max:160',
             'meta_keywords'     => 'nullable|string',
@@ -40,7 +45,7 @@ class UpdateProductRequest extends FormRequest
             'google_tag_manager'=> 'nullable|string',
             'ads'               => 'nullable|string',
 
-            // Gestão de Imagens no Update
+            // Gestão de Imagens
             'existing_images'   => 'nullable|array',
             'existing_images.*.id' => 'required|integer|exists:product_images,id',
             
@@ -53,18 +58,15 @@ class UpdateProductRequest extends FormRequest
     {
         return [
             'description.required' => 'A descrição não pode ficar vazia.',
-            'new_images.*.image'   => 'O arquivo enviado deve ser uma imagem.',
-            'new_images.max'       => 'Você pode carregar no máximo 6 novas imagens.',
+            'weight.min'           => 'O peso deve ser maior que zero.',
             'cost_price.min'       => 'O preço de custo não pode ser negativo.',
+            'new_images.max'       => 'Você pode carregar no máximo 6 novas imagens.',
         ];
     }
 
-    /**
-     * Lógica customizada pós-validação (Opcional)
-     * Verifica se o produto não ficou sem nenhuma imagem após a edição
-     */
     protected function passedValidation()
     {
+        // Garante que o produto não fique sem imagens
         $totalImages = count($this->existing_images ?? []) + count($this->file('new_images') ?? []);
         
         if ($totalImages < 1) {

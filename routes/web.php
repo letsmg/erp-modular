@@ -43,7 +43,7 @@ Route::middleware(['auth'])->group(function () {
     // Gerenciamento de Produtos
     Route::resource('products', ProductController::class);
     // Sua rota original de preview do Admin
-    Route::get('/products/{product}/preview', [ProductController::class, 'preview'])->name('products.preview.admin');
+    Route::get('/products/{product}/preview', [ProductController::class, 'preview'])->name('products.preview');
     Route::patch('/products/{product}/toggle', [ProductController::class, 'toggle'])->name('products.toggle');    
 
     // Outros Recursos (Recuperando os Resources que você tinha)

@@ -6,17 +6,11 @@ use Illuminate\Foundation\Http\FormRequest;
 
 class StoreProductRequest extends FormRequest
 {
-    /**
-     * Determina se o usuário está autorizado a fazer esta requisição.
-     */
     public function authorize(): bool
     {
         return true;
     }
 
-    /**
-     * Regras de validação para a criação de um produto.
-     */
     public function rules(): array
     {
         return [
@@ -28,8 +22,15 @@ class StoreProductRequest extends FormRequest
             'cost_price'      => 'required|numeric|min:0',
             'sale_price'      => 'required|numeric|min:0',
             'stock_quantity'  => 'required|integer|min:0',
+
+            // Logística e Frete
+            'weight'          => 'required|numeric|min:0.001', // Peso mínimo 1g
+            'width'           => 'required|numeric|min:1',     // Medidas mínimas 1cm
+            'height'          => 'required|numeric|min:1',
+            'length'          => 'required|numeric|min:1',
+            'free_shipping'   => 'boolean',
             
-            // SEO (Campos Nullable - Fallback no Model)
+            // SEO
             'meta_title'        => 'nullable|string|max:70',
             'meta_description'  => 'nullable|string|max:160',
             'meta_keywords'     => 'nullable|string',
@@ -41,26 +42,24 @@ class StoreProductRequest extends FormRequest
             'schema_markup'     => 'nullable|string',
             'google_tag_manager'=> 'nullable|string',
             'ads'               => 'nullable|string',
-
-            // Imagens (Obrigatórias na criação)
+            
+            // Imagens
             'images'          => 'required|array|min:1|max:6',
             'images.*'        => 'image|mimes:jpg,jpeg,png|max:2048', 
         ];
     }
 
-    /**
-     * Mensagens de erro personalizadas.
-     */
     public function messages(): array
     {
         return [
             'supplier_id.required' => 'Selecione um fornecedor.',
             'description.required' => 'A descrição do produto é obrigatória.',
-            'images.required'      => 'Você precisa enviar pelo menos uma imagem para o produto.',
+            'weight.required'      => 'O peso é obrigatório para o cálculo de frete.',
+            'width.required'       => 'A largura é obrigatória.',
+            'height.required'      => 'A altura é obrigatória.',
+            'length.required'      => 'O comprimento é obrigatório.',
+            'images.required'      => 'Você precisa enviar pelo menos uma imagem.',
             'images.min'           => 'Envie ao menos :min imagem.',
-            'images.max'           => 'O limite máximo é de :max imagens.',
-            'images.*.image'       => 'O arquivo deve ser uma imagem válida.',
-            'images.*.mimes'       => 'Apenas imagens JPG, JPEG e PNG são permitidas.',
             'images.*.max'         => 'Cada imagem não pode ser maior que 2MB.',
         ];
     }
