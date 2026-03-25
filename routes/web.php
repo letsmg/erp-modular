@@ -17,14 +17,22 @@ Route::get('/sitemap.xml', [SitemapController::class, 'index']);
 // 2. AUTENTICAÇÃO (Apenas para quem não está logado)
 Route::middleware('guest')->group(function () {
     Route::get('/', [StoreController::class, 'index'])->name('store.index');
+    Route::post('/terms/accept', [StoreController::class, 'acceptTerms'])->name('store.terms.accept');
+    // Rota de Detalhes do Produto (A que o erro acusou falta)
+    // O {slug} ou {id} é necessário para identificar o produto
+    Route::get('/store/product/{id}', [StoreController::class, 'show'])->name('store.product');
+    // Rota de Preview (Exclusiva para Admin/Preview)
+    Route::get('/products/{id}/preview', [StoreController::class, 'preview'])->name('products.preview');
+    
     Route::get('/login', [LoginController::class, 'showLogin'])->name('login');    
     Route::post('/login', [LoginController::class, 'login'])->name('login.post');
+    
     // Esqueci Senha
     Route::get('/forgot-password', [LoginController::class, 'showForgotPassword'])->name('password.request');
-    Route::post('/forgot-password', [LoginController::class, 'sendResetLinkEmail'])->name('password.email');
+    Route::post('/forgot-password', [LoginController::class, 'sendResetLinkEmail'])->name('password.email');    
 });
 
-Route::post('/terms/accept', [StoreController::class, 'acceptTerms'])->name('store.terms.accept');
+
 
 // 3. PAINEL ADMINISTRATIVO (Protegido por login)
 Route::middleware(['auth'])->group(function () {
@@ -37,7 +45,7 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('products', ProductController::class);
     Route::get('/products/{product}/preview', [ProductController::class, 'preview'])->name('products.preview');
     Route::patch('/products/{product}/toggle', [ProductController::class, 'toggle'])
-    ->name('products.toggle');
+    ->name('products.toggle');    
 
     Route::resource('suppliers', SupplierController::class);
     

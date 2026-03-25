@@ -11,6 +11,13 @@
 
 ---
 
+## 👨‍💻 Autor
+
+**Luiz Eduardo**  
+🔗 https://github.com/letsmg
+
+---
+
 # 🌎 Language / Idioma
 
 * 🇧🇷 [Ver em Português](#-português)
@@ -461,3 +468,5 @@ MIT License
 </p>
 
 <img src="https://raw.githubusercontent.com/letsmg/erp-vue-laravel/main/snake-dark.svg?palette=github-dark" />
+
+Copyright (c) 2026 Luiz Eduardo

@@ -1,3 +1,8 @@
+/*
+ERP ZENITE
+Copyright (c) 2026 Luiz Eduardo
+Uso não comercial permitido. Veja LICENSE para detalhes.
+*/
 <script setup>
 import StoreLayout from '@/Layouts/StoreLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
