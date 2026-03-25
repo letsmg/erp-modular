@@ -3,7 +3,7 @@ import StoreLayout from '@/Layouts/StoreLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
 import { useStoreIndex } from './useStoreIndex';
 import { 
-    SlidersHorizontal, ShoppingBag, ChevronLeft, 
+    ShoppingBag, ChevronLeft, 
     ChevronRight, ShieldCheck, SearchX 
 } from 'lucide-vue-next';
 
@@ -41,7 +41,7 @@ const {
         <section v-if="featuredProducts?.length" class="max-w-7xl mx-auto px-4 md:px-6 mt-12">
             <div class="relative group">
                 <div id="hero-carousel" class="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide gap-4 rounded-[2.5rem] md:rounded-[4rem] shadow-2xl">
-                    <div v-for="p in featuredProducts" :key="p.id" 
+                    <div v-for="p in featuredProducts" :key="p.slug" 
                          class="min-w-full snap-center relative aspect-[16/9] md:aspect-[21/9] bg-slate-900 overflow-hidden">
                         <img :src="p.images?.[0] ? '/storage/products/' + p.images[0].path : 'https://placehold.co/1200x500'" 
                              class="w-full h-full object-cover opacity-40 transition-transform duration-1000 group-hover:scale-110" />
@@ -51,7 +51,7 @@ const {
                             <h2 class="text-3xl md:text-6xl font-black mb-4 tracking-tighter leading-tight max-w-3xl uppercase italic">{{ p.description }}</h2>
                             <p class="text-2xl md:text-3xl text-indigo-400 mb-8 font-mono font-bold">R$ {{ p.sale_price }}</p>
                             
-                            <Link :href="route('store.product', p.id)" 
+                            <Link :href="route('store.product', p.slug)" 
                                   class="bg-white text-slate-900 px-10 py-5 rounded-2xl font-black uppercase text-xs w-fit hover:bg-indigo-600 hover:text-white transition-all shadow-2xl hover:-translate-y-1">
                                 Explorar Produto
                             </Link>
@@ -103,29 +103,47 @@ const {
                 </nav>
 
                 <div v-if="products.data?.length" class="grid grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10">
-                    <Link v-for="product in products.data" :key="product.id" 
-                          :href="route('store.product', product.id)"
-                          class="group bg-white p-5 rounded-[2.5rem] md:rounded-[3.5rem] border border-white shadow-sm hover:shadow-2xl transition-all duration-700 block">
+    
+                    <Link 
+                        v-for="product in products.data" 
+                        :key="product.slug"
+                        :href="route('store.product', product.slug)"
+                        class="group bg-white p-5 rounded-[2.5rem] md:rounded-[3.5rem] border border-white shadow-sm hover:shadow-2xl transition-all duration-700 block"
+                    >
                         
                         <div class="relative aspect-[4/5] rounded-[2rem] md:rounded-[2.8rem] overflow-hidden bg-slate-100 mb-6">
-                            <img :src="product.images?.[0] ? '/storage/products/' + product.images[0].path : 'https://placehold.co/600x800'" 
-                                 class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
-                            
+                            <img 
+                                :src="product.images?.[0] 
+                                    ? '/storage/products/' + product.images[0].path 
+                                    : 'https://placehold.co/600x800'" 
+                                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
+                            />
+
                             <div class="absolute inset-0 bg-indigo-900/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center">
                                 <div class="bg-white p-4 rounded-full scale-50 group-hover:scale-100 transition-transform duration-500 shadow-2xl">
                                     <ShoppingBag class="w-6 h-6 text-slate-900" />
                                 </div>
                             </div>
                         </div>
-                        
+
                         <div class="px-3">
-                            <h3 class="text-xs md:text-sm font-black uppercase truncate text-slate-800 tracking-tight">{{ product.description }}</h3>
+                            <h3 class="text-xs md:text-sm font-black uppercase truncate text-slate-800 tracking-tight">
+                                {{ product.description }}
+                            </h3>
+
                             <div class="flex items-center justify-between mt-2">
-                                <p class="text-sm md:text-2xl font-black text-indigo-600 font-mono tracking-tighter">R$ {{ product.sale_price }}</p>
-                                <span class="text-[8px] font-black text-slate-300 uppercase tracking-widest group-hover:text-indigo-600 transition-colors">Ver Mais</span>
+                                <p class="text-sm md:text-2xl font-black text-indigo-600 font-mono tracking-tighter">
+                                    R$ {{ product.sale_price }}
+                                </p>
+
+                                <span class="text-[8px] font-black text-slate-300 uppercase tracking-widest group-hover:text-indigo-600 transition-colors">
+                                    Ver Mais
+                                </span>
                             </div>
                         </div>
+
                     </Link>
+
                 </div>
 
                 <div v-else class="text-center py-32 bg-white rounded-[4rem] border-4 border-dashed border-slate-50">
@@ -168,11 +186,8 @@ const {
 </template>
 
 <style scoped>
-/* Esconde scrollbar mas mantém funcionalidade */
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
-
-/* Suaviza o sticky ao rolar */
 .sticky {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }

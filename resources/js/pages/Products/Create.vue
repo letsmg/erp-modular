@@ -10,7 +10,8 @@ import {
 } from 'lucide-vue-next';
 
 const props = defineProps({
-    suppliers: Array
+    suppliers: Array,
+    categories: Array
 });
 
 const { 
@@ -96,6 +97,30 @@ onUnmounted(() => window.removeEventListener('keydown', handleShortcut));
                         <div>
                             <label class="block text-[10px] font-black uppercase text-gray-400 mb-2">Marca</label>
                             <input v-model="form.brand" type="text" class="w-full border-gray-100 bg-gray-50 rounded-2xl font-bold" />
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black uppercase text-gray-400 mb-2">
+                                Categoria
+                            </label>
+
+                            <select 
+                                v-model="form.category_id"                                
+                                class="w-full border-gray-100 bg-gray-50 rounded-2xl text-sm font-bold focus:ring-indigo-500"
+                            >
+                                <option :value="null">Selecione uma categoria...</option>
+
+                                <option 
+                                    v-for="c in categories" 
+                                    :key="c.id" 
+                                    :value="c.id"
+                                >
+                                    {{ c.name }}
+                                </option>
+                            </select>
+
+                            <p v-if="form.errors.category_id" class="text-red-500 text-xs mt-1">
+                                {{ form.errors.category_id }}
+                            </p>
                         </div>
                         <div>
                             <label class="block text-[10px] font-black uppercase text-gray-400 mb-2">Modelo</label>
@@ -197,9 +222,9 @@ onUnmounted(() => window.removeEventListener('keydown', handleShortcut));
                 <div v-show="activeTab === 'seo'" class="animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-6">
                     <div class="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm space-y-6">
                         <div class="flex items-center gap-3"><Code class="w-5 h-5 text-indigo-600" /><h3 class="text-xs font-black uppercase tracking-widest text-gray-500">Rastreamento e Tags</h3></div>
-                        <div><label class="block text-[10px] font-black uppercase text-gray-400 mb-2">Google Tag Manager Script</label><textarea v-model="form.google_tag_manager" rows="3" class="w-full border-gray-100 bg-gray-50 rounded-2xl text-[11px] font-mono"></textarea></div>
+                        <div><label class="block text-[10px] font-black uppercase text-gray-400 mb-2">Google Tag Manager Script</label><textarea v-model="form.google_tag_manager" rows="3" class="w-full border-gray-100 bg-gray-50 rounded-2xl text-[11px] font-mono"></textarea></div>                        
                         <div class="grid grid-cols-2 gap-4">                            
-                            <div><label class="block text-[10px] font-black uppercase text-gray-400 mb-2">URL Canônica (Canonical)</label><input v-model="form.canonical_url" type="text" class="w-full border-gray-100 bg-gray-50 rounded-2xl font-bold" /></div>
+                            <div><label class="block text-[10px] font-black uppercase text-gray-400 mb-2">URL Canônica (Canonical)</label><input v-model="form.slug" type="text" class="w-full border-gray-100 bg-gray-50 rounded-2xl font-bold" /></div>
                         </div>
                     </div>
 

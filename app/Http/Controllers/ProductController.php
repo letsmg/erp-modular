@@ -9,6 +9,8 @@ use App\Repositories\ProductRepository;
 use Inertia\Inertia;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
+use App\Models\Category;
+
 
 class ProductController extends Controller
 {
@@ -40,7 +42,8 @@ class ProductController extends Controller
     public function create()
     {
         return Inertia::render('Products/Create', [
-            'suppliers' => $this->repository->getActiveSuppliers()
+            'suppliers' => $this->repository->getActiveSuppliers(),
+            'categories' => Category::where('is_active', true)->orderBy('name')->get(),
         ]);
     }
 

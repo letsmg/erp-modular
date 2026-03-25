@@ -24,22 +24,35 @@ class StoreController extends Controller
         return Inertia::render('Store/Index', $data);
     }
 
-    public function show($id)
+    /**
+     * 🔥 CORRIGIDO: agora usa Route Model Binding com SLUG
+     */
+    public function show(Product $product)
     {
-        $product = Product::with(['images', 'seo'])->where('is_active', true)->findOrFail($id);
-        
+        // Garante que apenas produtos ativos sejam exibidos
+        abort_if(!$product->is_active, 404);
+
+        // Carrega relações
+        $product->load(['images', 'seo']);
+
+        // Produtos relacionados
         $relatedProducts = Product::with('images')
             ->where('brand', $product->brand)
             ->where('id', '!=', $product->id)
             ->where('is_active', true)
-            ->limit(4)->get();
+            ->limit(4)
+            ->get();
 
-        return Inertia::render('Store/Show', compact('product', 'relatedProducts'));
+        return Inertia::render('Store/Show', [
+            'product' => $product,
+            'relatedProducts' => $relatedProducts
+        ]);
     }
 
     public function acceptTerms(Request $request)
     {
         $this->service->recordTermAcceptance($request);
+
         return back()->with('success', 'Termos aceitos.');
     }
 }

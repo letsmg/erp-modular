@@ -19,7 +19,6 @@ class Product extends Model
         'promo_price', 'promo_start_at', 'promo_end_at',
         'barcode', 'stock_quantity', 'is_active', 'is_featured',
         'slug',
-        // Novos campos de frete
         'weight', 'width', 'height', 'length', 'free_shipping'
     ];
 
@@ -29,7 +28,7 @@ class Product extends Model
         'free_shipping' => 'boolean', 
         'promo_start_at' => 'datetime',
         'promo_end_at' => 'datetime',
-        'cost_price' => 'decimal:2', // Garantindo precisão numérica
+        'cost_price' => 'decimal:2',
         'sale_price' => 'decimal:2',
         'promo_price' => 'decimal:2',
         'weight' => 'decimal:3',
@@ -40,31 +39,55 @@ class Product extends Model
 
     protected $appends = ['current_price', 'seo_display'];
 
+    
     /**
-     * Ciclo de Vida do Model (Eventos)
+     * Eventos do Model
      */
     protected static function booted()
     {
-        // Ao criar um produto
+        // Criar slug automaticamente
         static::creating(function ($product) {
             if (!$product->slug) {
-                $product->slug = Str::slug($product->description) . '-' . Str::random(5);
+                $product->slug = self::generateUniqueSlug($product->description);
             }
         });
 
-        // Ao deletar um produto
+        // Atualizar slug se descrição mudar (opcional 🔥)
+        static::updating(function ($product) {
+            if ($product->isDirty('description')) {
+                $product->slug = self::generateUniqueSlug($product->description);
+            }
+        });
+
+        // Delete em cascata
         static::deleting(function ($product) {
-            // Deleta o SEO polimórfico se ele existir
             if ($product->seo) {
                 $product->seo()->delete();
             }
 
-            // Opcional: Se quiser que as imagens sumam do BANCO no delete
-            // (O cascade na migration já faz isso, mas aqui reforça)
             $product->images()->delete();
         });
     }
 
+    /**
+     * 🔥 Geração de slug único (melhor que random puro)
+     */
+    public static function generateUniqueSlug($text)
+    {
+        $baseSlug = Str::slug($text);
+        $slug = $baseSlug;
+        $count = 1;
+
+        while (self::where('slug', $slug)->exists()) {
+            $slug = $baseSlug . '-' . $count++;
+        }
+
+        return $slug;
+    }
+
+    /**
+     * RELAÇÕES
+     */
     public function supplier(): BelongsTo
     {
         return $this->belongsTo(Supplier::class);
@@ -72,8 +95,9 @@ class Product extends Model
 
     public function images(): HasMany
     {
-        // Ordenação por ID garante que a primeira foto enviada seja a principal no front
-        return $this->hasMany(ProductImage::class)->orderBy('order', 'asc')->orderBy('id', 'asc');
+        return $this->hasMany(ProductImage::class)
+            ->orderBy('order', 'asc')
+            ->orderBy('id', 'asc');
     }
     
     public function seo(): MorphOne
@@ -82,30 +106,40 @@ class Product extends Model
     }
 
     /**
-     * Accessors (Campos Virtuais)
+     * ACCESSORS
      */
     public function getCurrentPriceAttribute()
     {
         $now = now();
-        if ($this->promo_price && $this->promo_start_at && $this->promo_end_at) {
-            if ($now->between($this->promo_start_at, $this->promo_end_at)) {
-                return (float) $this->promo_price;
-            }
+
+        if (
+            $this->promo_price &&
+            $this->promo_start_at &&
+            $this->promo_end_at &&
+            $now->between($this->promo_start_at, $this->promo_end_at)
+        ) {
+            return (float) $this->promo_price;
         }
+
         return (float) $this->sale_price;
     }
 
     public function getSeoDisplayAttribute()
     {
-        // Carrega o relacionamento caso ele não esteja presente
         $seo = $this->seo;
 
         return [
-            'meta_title'       => $seo?->meta_title ?: $this->h1,
+            'meta_title'       => $seo?->meta_title ?: $this->description,
             'meta_description' => $seo?->meta_description ?: "Confira {$this->description} com o melhor preço na nossa loja.",
-            'slug'             => $seo?->slug ?: $this->slug,
-            'h1'               => $seo?->h1 ?: $this->title,
+            'h1'               => $seo?->h1 ?: $this->description,
             'meta_keywords'    => $seo?->meta_keywords ?: str_replace(' ', ', ', $this->description),
+            'slug'             => $this->slug,
+            'canonical_url'    => config('app.url') . '/store/product/' . $this->slug,
         ];
+    }
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
     }
 }

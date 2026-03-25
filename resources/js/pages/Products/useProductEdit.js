@@ -15,11 +15,12 @@ export function useProductEdit(props) {
     };
 
     const form = useForm({
-        _method: 'PUT', // Necessário para Laravel aceitar arquivos via Multipart Form Data
+        _method: 'PUT',
 
         // --- Dados Gerais ---
         description: props.product.description || '',
         supplier_id: props.product.supplier_id || '',
+        category_id: props.product.supplier_id || '',
         barcode: props.product.barcode || '',
         brand: props.product.brand || '',
         model: props.product.model || '',
@@ -27,6 +28,8 @@ export function useProductEdit(props) {
         size: props.product.size || '',
         gender: props.product.gender || 'Unissex',
         stock_quantity: props.product.stock_quantity || 0,
+        // Slug centralizado no Produto
+        slug: props.product.slug || '',
 
         // --- Financeiro ---
         cost_price: Number(props.product.cost_price) || 0,
@@ -42,19 +45,16 @@ export function useProductEdit(props) {
         length: Number(props.product.length) || 0,
         free_shipping: Boolean(props.product.free_shipping),
 
-        // --- SEO & Marketing ---
+        // --- SEO & Marketing (Vêm do relacionamento 'seo') ---
         google_tag_manager: props.product.seo?.google_tag_manager || '',        
-        canonical_url: props.product.seo?.canonical_url || '',
-        meta_title: props.product.seo?.meta_title || props.product.seo_display?.meta_title || '',
-        meta_description: props.product.seo?.meta_description || props.product.seo_display?.meta_description || '',
-        
-        // Converte string "tag1, tag2" para Array
+        meta_title: props.product.seo?.meta_title || '',
+        meta_description: props.product.seo?.meta_description || '',
         meta_keywords: props.product.seo?.meta_keywords 
             ? props.product.seo.meta_keywords.split(',').map(s => s.trim()).filter(s => s !== "") 
             : [],
 
         // Conteúdo On-Page
-        h1: props.product.seo?.h1 || props.product.seo_display?.h1 || '',
+        h1: props.product.seo?.h1 || '',
         h2: props.product.seo?.h2 || '',
         text1: props.product.seo?.text1 || '',
         text2: props.product.seo?.text2 || '',
@@ -65,8 +65,6 @@ export function useProductEdit(props) {
         new_images: [],
         removed_images: [], 
     });
-
-    // --- Lógica de Negócio ---
 
     const addTag = () => {
         const val = tagInput.value.trim();
@@ -97,10 +95,7 @@ export function useProductEdit(props) {
         const currentTotal = form.existing_images.length + form.new_images.length;
         const remainingSlots = 6 - currentTotal;
         
-        if (remainingSlots <= 0) {
-            alert("Limite de 6 imagens atingido.");
-            return;
-        }
+        if (remainingSlots <= 0) return;
 
         files.slice(0, remainingSlots).forEach(file => {
             form.new_images.push(file);
@@ -121,22 +116,6 @@ export function useProductEdit(props) {
         newImagePreviews.value.splice(index, 1);
     };
 
-    const moveImage = (type, index, direction) => {
-        const list = type === 'existing' ? form.existing_images : form.new_images;
-        const newIndex = index + direction;
-        if (newIndex < 0 || newIndex >= list.length) return;
-
-        const temp = list[index];
-        list[index] = list[newIndex];
-        list[newIndex] = temp;
-
-        if (type === 'new') {
-            const tempPreview = newImagePreviews.value[index];
-            newImagePreviews.value[index] = newImagePreviews.value[newIndex];
-            newImagePreviews.value[newIndex] = tempPreview;
-        }
-    };
-
     const submit = () => {
         form.transform((data) => ({
             ...data,
@@ -144,8 +123,8 @@ export function useProductEdit(props) {
             meta_keywords: Array.isArray(data.meta_keywords) 
                 ? data.meta_keywords.join(', ') 
                 : data.meta_keywords,
-            // O backend usará a ordem deste array para atualizar a coluna 'order'
-            existing_images: data.existing_images
+            // Enviamos a lista de IDs das imagens existentes para o backend reordenar
+            existing_images: data.existing_images.map(img => img.id)
         })).post(route('products.update', props.product.id), {
             preserveScroll: true,
             forceFormData: true, 
@@ -158,17 +137,8 @@ export function useProductEdit(props) {
     };
 
     return {
-        form, 
-        activeTab, 
-        newImagePreviews, 
-        tagInput,
-        addTag, 
-        removeTag, 
-        handleImageUpload, 
-        removeExistingImage, 
-        removeNewImage,
-        moveImage,
-        profitData, 
-        submit
+        form, activeTab, newImagePreviews, tagInput,
+        addTag, removeTag, handleImageUpload, removeExistingImage, 
+        removeNewImage, profitData, submit
     };
 }

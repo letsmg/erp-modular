@@ -9,9 +9,10 @@ export function useProductForm(props) {
 
     const form = useForm({
         // Geral
-        supplier_id: null,
+        supplier_id: '',
         description: '',
         brand: '',
+        category_id: '',
         model: '',
         size: '',
         collection: '',
@@ -30,17 +31,17 @@ export function useProductForm(props) {
         promo_end_at: '',
         
         // Logística (Mantido conforme seu código: inicializado com 0.1)
-        weight: 1.5,
-        width: 1.5,
-        height: 1.1,
-        length: 1.1,
+        weight: '',
+        width: '',
+        height: '',
+        length: '',
         free_shipping: false,
 
         // Marketing & SEO
         meta_title: '',
         meta_description: '',
         meta_keywords: [], 
-        canonical_url: '',
+        slug: '',
         h1: '',
         h2: '',
         text1: '',
@@ -81,6 +82,10 @@ export function useProductForm(props) {
     };
 
     const removeImage = (index) => {
+        // Revoga a URL para liberar memória
+        if (imagePreviews.value[index].startsWith('blob:')) {
+            URL.revokeObjectURL(imagePreviews.value[index]);
+        }
         form.images.splice(index, 1);
         imagePreviews.value.splice(index, 1);
     };
@@ -127,23 +132,27 @@ export function useProductForm(props) {
     });
 
     const submit = () => {
-        // Converte Array de keywords em String antes de enviar
-        const dataToSend = {
-            ...form.data(),
-            meta_keywords: Array.isArray(form.meta_keywords) 
-                ? form.meta_keywords.join(', ') 
-                : form.meta_keywords
-        };
-
-        form.transform(() => dataToSend).post(route('products.store'), {
+        // Garantimos que o transform envie os dados formatados
+        form.transform((data) => ({
+            ...data,
+            // Transforma o array ['tag1', 'tag2'] em "tag1, tag2" para o SEO
+            meta_keywords: Array.isArray(data.meta_keywords) 
+                ? data.meta_keywords.join(', ') 
+                : data.meta_keywords,
+        })).post(route('products.store'), {
             preserveScroll: true,
-            forceFormData: true,
+            forceFormData: true, // Essencial para envio de arquivos (Files)
             onSuccess: () => {
+                // Limpa os previews da memória após o sucesso
+                imagePreviews.value.forEach(url => {
+                    if (url.startsWith('blob:')) URL.revokeObjectURL(url);
+                });
                 form.reset();
                 imagePreviews.value = [];
                 tagInput.value = '';
             },
-            onError: () => {
+            onError: (errors) => {
+                console.error("Erro ao salvar:", errors);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             }
         });

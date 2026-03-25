@@ -8,31 +8,19 @@ use App\Models\Supplier;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Http;
 
 class ProductSeeder extends Seeder
 {
     public function run(): void
     {
-        // --- ADICIONE ESTE BLOCO AQUI ---
         $this->command->warn('Limpando pasta de imagens antiga...');
-        
-        // Deleta todos os arquivos da pasta products dentro do disco public
         Storage::disk('public')->deleteDirectory('products');
-        
-        // Recria a pasta vazia
         Storage::disk('public')->makeDirectory('products');
-        // --------------------------------
 
         $supplier = Supplier::first() ?? Supplier::create([
             'company_name' => 'Fornecedor Padrão',
             'email' => 'fornecedor@teste.com'
         ]);
-
-        // Criar a pasta se não existir
-        if (!Storage::disk('public')->exists('products')) {
-            Storage::disk('public')->makeDirectory('products');
-        }
 
         $this->command->info('Iniciando criacao de produtos e download de imagens...');
 
@@ -40,12 +28,14 @@ class ProductSeeder extends Seeder
             'supplier_id' => $supplier->id
         ])->each(function ($product) {
             
-            // 1. Criar o SEO
+            // 1. Criar o SEO (Ajustado para os novos campos obrigatórios e sem slug)
             $product->seo()->create([
-                'meta_title'       => $product->description,
-                'slug'             => Str::slug($product->description) . '-' . $product->id,
-                'meta_description' => "Compre agora " . $product->description,
+                'meta_title'       => Str::limit($product->description, 60),
+                'meta_description' => "Compre agora " . $product->description . " com as melhores condições.",
+                'meta_keywords'    => str_replace(' ', ', ', $product->description),
                 'h1'               => $product->description,
+                'text1'            => "Descrição detalhada do produto " . $product->description,
+                // text2, h2, etc., são nullables, então não precisam estar aqui.
             ]);
 
             // 2. Criar 3 imagens baixando da internet
@@ -54,16 +44,14 @@ class ProductSeeder extends Seeder
                 $imageUrl = "https://picsum.photos/640/480?random=" . rand(1, 10000);
 
                 try {
-                    // Baixa a imagem
                     $imageContent = file_get_contents($imageUrl);
                     
                     if ($imageContent) {
-                        // Salva no storage/app/public/products/
                         Storage::disk('public')->put('products/' . $imageName, $imageContent);
 
                         ProductImage::create([
                             'product_id' => $product->id,
-                            'path'       => $imageName, // Caminho que o seu Vue já espera
+                            'path'       => $imageName,
                             'order'      => $i
                         ]);
                     }

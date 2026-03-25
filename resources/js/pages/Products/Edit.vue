@@ -10,10 +10,10 @@ import {
 
 const props = defineProps({
     product: Object,
-    suppliers: Array
+    suppliers: Array,
+    categories: Array
 });
 
-// Extraímos a lógica do composable
 const { 
     form, 
     activeTab, 
@@ -184,17 +184,21 @@ const dragOptions = {
 
                 <div v-show="activeTab === 'seo'" class="animate-in fade-in slide-in-from-bottom-2 duration-500 space-y-6">
                     <div class="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm space-y-6">
-                        <div class="flex items-center gap-3"><Code class="w-5 h-5 text-indigo-600" /><h3 class="text-xs font-black uppercase tracking-widest text-gray-500">Tags e Scripts</h3></div>
-                        <div><label class="block text-[10px] font-black uppercase text-gray-400 mb-2">Google Tag Manager Script</label><textarea v-model="form.google_tag_manager" rows="3" class="w-full border-gray-100 bg-gray-50 rounded-2xl text-[11px] font-mono"></textarea></div>
-                        <div class="grid grid-cols-2 gap-4">
-                            
-                            <div><label class="block text-[10px] font-black uppercase text-gray-400 mb-2">URL Canônica</label><input v-model="form.canonical_url" class="w-full border-gray-100 bg-gray-50 rounded-2xl font-bold text-xs" /></div>
+                        <div class="flex items-center gap-3"><Code class="w-5 h-5 text-indigo-600" /><h3 class="text-xs font-black uppercase tracking-widest text-gray-500">Configurações de URL</h3></div>
+                        <div>
+                            <label class="block text-[10px] font-black uppercase text-gray-400 mb-2">Slug da URL (Canônica)</label>
+                            <input v-model="form.slug" class="w-full border-gray-100 bg-gray-50 rounded-2xl font-bold text-xs" />
+                            <p class="mt-2 text-[10px] text-gray-400 italic">Cuidado: Alterar o slug pode quebrar links externos indexados.</p>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-black uppercase text-gray-400 mb-2">Google Tag Manager Script</label>
+                            <textarea v-model="form.google_tag_manager" rows="3" class="w-full border-gray-100 bg-gray-50 rounded-2xl text-[11px] font-mono"></textarea>
                         </div>
                     </div>
 
                     <div class="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm space-y-6">
                         <div class="flex items-center gap-3"><Search class="w-5 h-5 text-amber-600" /><h3 class="text-xs font-black uppercase tracking-widest text-gray-500">SEO Meta Tags</h3></div>
-                        <div><label class="block text-[10px] font-black uppercase text-gray-400 mb-2">SEO Title</label><input v-model="form.meta_title" class="w-full border-gray-100 bg-gray-50 rounded-2xl font-bold" /></div>
+                        <div><label class="block text-[10px] font-black uppercase text-gray-400 mb-2">SEO Title (Máx 70)</label><input v-model="form.meta_title" maxlength="70" class="w-full border-gray-100 bg-gray-50 rounded-2xl font-bold" required /></div>
                         <div>
                             <label class="block text-[10px] font-black uppercase text-gray-400 mb-2">Palavras-Chave (Enter)</label>
                             <div class="flex flex-wrap gap-2 p-3 border border-gray-100 bg-gray-50 rounded-2xl">
@@ -204,18 +208,18 @@ const dragOptions = {
                                 <input v-model="tagInput" @keydown.enter.prevent="addTag" placeholder="Nova tag..." class="flex-1 bg-transparent border-none focus:ring-0 text-sm font-bold p-0" />
                             </div>
                         </div>
-                        <div><label class="block text-[10px] font-black uppercase text-gray-400 mb-2">Meta Description</label><textarea v-model="form.meta_description" rows="2" class="w-full border-gray-100 bg-gray-50 rounded-2xl font-bold text-xs"></textarea></div>
+                        <div><label class="block text-[10px] font-black uppercase text-gray-400 mb-2">Meta Description (Máx 160)</label><textarea v-model="form.meta_description" maxlength="160" rows="2" class="w-full border-gray-100 bg-gray-50 rounded-2xl font-bold text-xs" required></textarea></div>
                     </div>
 
                     <div class="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm space-y-6">
                         <div class="flex items-center gap-3"><FileText class="w-5 h-5 text-green-600" /><h3 class="text-xs font-black uppercase tracking-widest text-gray-500">Conteúdo On-Page</h3></div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div><label class="block text-[10px] font-black uppercase text-gray-400 mb-2">Título (H1)</label><input v-model="form.h1" type="text" class="w-full border-gray-100 bg-gray-50 rounded-2xl font-bold" /></div>
-                            <div><label class="block text-[10px] font-black uppercase text-gray-400 mb-2">Apresentação (Text 1)</label><textarea v-model="form.text1" rows="3" class="w-full border-gray-100 bg-gray-50 rounded-2xl font-bold"></textarea></div>    
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div><label class="block text-[10px] font-black uppercase text-gray-400 mb-2">Título H1 Principal</label><input v-model="form.h1" type="text" class="w-full border-gray-100 bg-gray-50 rounded-2xl font-bold" required /></div>
+                            <div><label class="block text-[10px] font-black uppercase text-gray-400 mb-2">Texto de Apresentação (Text 1)</label><textarea v-model="form.text1" rows="3" class="w-full border-gray-100 bg-gray-50 rounded-2xl font-bold" required></textarea></div>    
                         </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div><label class="block text-[10px] font-black uppercase text-gray-400 mb-2">Subtítulo (H2)</label><input v-model="form.h2" type="text" class="w-full border-gray-100 bg-gray-50 rounded-2xl font-bold" /></div>
-                            <div><label class="block text-[10px] font-black uppercase text-gray-400 mb-2">Detalhes (Text 2)</label><textarea v-model="form.text2" rows="3" class="w-full border-gray-100 bg-gray-50 rounded-2xl font-bold"></textarea></div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div><label class="block text-[10px] font-black uppercase text-gray-400 mb-2">Subtítulo H2</label><input v-model="form.h2" type="text" class="w-full border-gray-100 bg-gray-50 rounded-2xl font-bold" /></div>
+                            <div><label class="block text-[10px] font-black uppercase text-gray-400 mb-2">Detalhes Adicionais (Text 2)</label><textarea v-model="form.text2" rows="3" class="w-full border-gray-100 bg-gray-50 rounded-2xl font-bold"></textarea></div>
                         </div>
                         <div><label class="block text-[10px] font-black uppercase text-gray-400 mb-2">Schema JSON-LD</label><textarea v-model="form.schema_markup" rows="2" class="w-full border-gray-100 bg-gray-50 rounded-2xl font-mono text-[10px]"></textarea></div>
                     </div>

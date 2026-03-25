@@ -3,46 +3,65 @@
 namespace App\Repositories;
 
 use App\Models\Product;
-use Illuminate\Support\Facades\DB;
 
 class StoreRepository
 {
+    /**
+     * 🔍 Produtos com filtros
+     */
     public function getFilteredProducts(array $filters)
     {
         $query = Product::query()
             ->with(['images', 'seo'])
             ->where('is_active', true);
 
-        if (!empty($filters['search']) && strlen($filters['search']) >= 3) {
-            // Usando unaccent para ignorar acentuação no PostgreSQL
+        // 🔎 Busca por texto (PostgreSQL com unaccent)
+        if (!empty($filters['search']) && mb_strlen($filters['search']) >= 3) {
             $searchTerm = '%' . $filters['search'] . '%';
-            $query->whereRaw("unaccent(description) ilike unaccent(?)", [$searchTerm]);
+
+            $query->where(function ($q) use ($searchTerm) {
+                $q->whereRaw("unaccent(description) ILIKE unaccent(?)", [$searchTerm])
+                  ->orWhereRaw("unaccent(brand) ILIKE unaccent(?)", [$searchTerm]);
+            });
         }
 
-        if (!empty($filters['min_price'])) {
-            $query->where('sale_price', '>=', $filters['min_price']);
+        // 💰 Preço mínimo
+        if (!empty($filters['min_price']) && is_numeric($filters['min_price'])) {
+            $query->where('sale_price', '>=', (float) $filters['min_price']);
         }
 
-        if (!empty($filters['max_price'])) {
-            $query->where('sale_price', '<=', $filters['max_price']);
+        // 💰 Preço máximo
+        if (!empty($filters['max_price']) && is_numeric($filters['max_price'])) {
+            $query->where('sale_price', '<=', (float) $filters['max_price']);
         }
 
+        // 🏷️ Marca
         if (!empty($filters['brand'])) {
             $query->where('brand', $filters['brand']);
         }
 
-        return $query->orderBy('created_at', 'desc')->paginate(9);
+        return $query
+            ->orderByDesc('created_at')
+            ->paginate(9)
+            ->withQueryString(); // 🔥 mantém filtros na paginação
     }
 
+    /**
+     * ⭐ Produtos em destaque
+     */
     public function getFeaturedProducts(int $limit = 5)
     {
         return Product::with(['images', 'seo'])
             ->where('is_active', true)
-            ->inRandomOrder()
+            ->where('is_featured', true) // 🔥 corrigido (antes estava random)
+            ->latest()
             ->limit($limit)
             ->get();
     }
 
+    /**
+     * 💸 Produtos mais baratos (promoção simples)
+     */
     public function getOnSaleProducts(int $limit = 8)
     {
         return Product::with(['images'])
@@ -52,8 +71,16 @@ class StoreRepository
             ->get();
     }
 
+    /**
+     * 🏷️ Lista de marcas
+     */
     public function getAllBrands()
     {
-        return Product::distinct()->whereNotNull('brand')->pluck('brand');
+        return Product::query()
+            ->whereNotNull('brand')
+            ->where('is_active', true)
+            ->distinct()
+            ->orderBy('brand')
+            ->pluck('brand');
     }
 }

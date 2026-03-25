@@ -101,7 +101,7 @@ export const fillFormData = (form: any, suppliers: any[] = []) => {
         meta_description: () => "Compre o novo Air Max 2026 com tecnologia de amortecimento turbo.",
         // CORREÇÃO: Transformamos a string em Array para o componente de tags entender
         meta_keywords: () => ["tênis nike", "air max 2026", "corrida", "esportes"],
-        canonical_url: () => "https://sualoja.com.br/produtos/tenis-nike-2026",
+        slug: () => "PATH/produtos/tenis-nike-2026",
         h1: () => "Tênis Nike Air Max 2026 Original",
         h2: () => "O máximo em performance e estilo",
         text1: () => "Desenvolvido para atletas que buscam quebrar recordes.",

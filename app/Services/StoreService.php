@@ -8,32 +8,46 @@ use Illuminate\Http\Request;
 
 class StoreService
 {
-    protected $repository;
+    protected StoreRepository $repository;
 
     public function __construct(StoreRepository $repository)
     {
         $this->repository = $repository;
     }
 
-    public function getDataForIndex(array $filters)
+    /**
+     * 🔥 Retorna todos os dados necessários para a vitrine
+     */
+    public function getDataForIndex(array $filters): array
     {
         return [
-            'products' => $this->repository->getFilteredProducts($filters),
+            'products'         => $this->repository->getFilteredProducts($filters),
             'featuredProducts' => $this->repository->getFeaturedProducts(),
-            'onSaleProducts' => $this->repository->getOnSaleProducts(),
-            'brands' => $this->repository->getAllBrands(),
-            'filters' => $filters,
+            'onSaleProducts'   => $this->repository->getOnSaleProducts(),
+            'brands'           => $this->repository->getAllBrands(),
+            'filters'          => $filters,
         ];
     }
 
-    public function recordTermAcceptance(Request $request)
+    /**
+     * 🔐 Registra aceite de termos
+     */
+    public function recordTermAcceptance(Request $request): TermAcceptance
     {
         return TermAcceptance::create([
-            'user_id' => auth()->id(),
-            'ip_address' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-            'accepted_at' => now(),
-            'term_version' => '1.0'
+            'user_id'      => auth()->id(),
+            'ip_address'   => $request->ip(),
+            'user_agent'   => $this->sanitizeUserAgent($request->userAgent()),
+            'accepted_at'  => now(),
+            'term_version' => config('app.term_version', '1.0'),
         ]);
+    }
+
+    /**
+     * 🛡️ Evita erro de tamanho no banco (PostgreSQL)
+     */
+    private function sanitizeUserAgent(?string $userAgent): string
+    {
+        return substr($userAgent ?? 'unknown', 0, 255);
     }
 }

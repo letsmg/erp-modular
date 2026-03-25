@@ -1,5 +1,6 @@
 <script setup>
-import { Head, Link, usePage, router } from '@inertiajs/vue3';
+import { Head, Link, usePage, router} from '@inertiajs/vue3';
+import { watch } from 'vue'
 import { 
     ArrowLeft, ShoppingCart, Globe, Star, Loader2, 
     Eye, EyeOff, LayoutDashboard, ChevronLeft, ChevronRight
@@ -10,6 +11,10 @@ import StoreLayout from '@/Layouts/StoreLayout.vue';
 const props = defineProps({
     product: Object,
     relatedProducts: Array
+});
+
+watch(() => props.product.id, () => {
+    activeImageIndex.value = 0;
 });
 
 const page = usePage();
@@ -54,7 +59,8 @@ const toggleStatus = () => {
 };
 
 const formatCurrency = (value) => {
-    return new Number(value).toLocaleString('pt-BR', { 
+    // 3. Use Number() de forma direta e limpa
+    return Number(value).toLocaleString('pt-BR', { 
         style: 'currency', 
         currency: 'BRL' 
     });
@@ -66,7 +72,7 @@ const formatCurrency = (value) => {
         <title>{{ seoData.meta_title || product.description }}</title>
         <meta name="description" :content="seoData.meta_description" />
         <meta name="keywords" :content="seoData.meta_keywords" />
-        <link rel="canonical" :href="seoData.canonical_url || page.url" />
+        <link rel="slug" :href="seoData.slug || page.url" />
         
         <component 
             v-if="seoData.schema_markup" 

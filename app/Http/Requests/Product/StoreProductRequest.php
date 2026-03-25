@@ -17,15 +17,16 @@ class StoreProductRequest extends FormRequest
             // Dados Básicos
             'supplier_id'     => 'required|exists:suppliers,id',
             'description'     => 'required|string|max:255',            
-            'brand'           => 'nullable|string|max:100',
-            'model'           => 'nullable|string|max:100',
+            'brand'           => 'required|nullable|string|max:100',
+            'category_id'     => 'required','exists:categories,id',
+            'model'           => 'required|nullable|string|max:100',
             'size'            => 'nullable|string|max:50',
             'collection'      => 'nullable|string|max:100',
-            'gender'          => 'nullable|string|max:50',
+            'gender'          => 'required|nullable|string|max:50',
             'barcode'         => 'nullable|string|max:100',
-            'cost_price'      => 'required|numeric|min:0',
-            'sale_price'      => 'required|numeric|min:0',
-            'stock_quantity'  => 'required|integer|min:0',
+            'cost_price'      => 'required|required|numeric|min:0',
+            'sale_price'      => 'required|required|numeric|min:0',
+            'stock_quantity'  => 'required|required|integer|min:0',
             'is_active'       => 'boolean',
             'is_featured'     => 'boolean',
 
@@ -43,12 +44,11 @@ class StoreProductRequest extends FormRequest
             'free_shipping'   => 'boolean',
             
             // Marketing & SEO
-            'meta_title'        => 'nullable|string|max:70',
-            'meta_description'  => 'nullable|string|max:160',
-            'meta_keywords'     => 'nullable|string',
-            'canonical_url'     => 'nullable|string', // String em vez de URL para aceitar sem http://
-            'h1'                => 'nullable|string',
-            'text1'             => 'nullable|string',
+            'meta_title'        => 'required|string|max:70',
+            'meta_description'  => 'required|string|max:160',
+            'meta_keywords'     => 'required|string',            
+            'h1'                => 'required|string',
+            'text1'             => 'required|string',
             'h2'                => 'nullable|string',
             'text2'             => 'nullable|string',
             'schema_markup'     => 'nullable|string',
@@ -67,6 +67,7 @@ class StoreProductRequest extends FormRequest
             // Dados Básicos
             'supplier_id.required' => 'Selecione um fornecedor para este produto.',
             'supplier_id.exists'   => 'O fornecedor selecionado é inválido.',
+            'category_id.exists'          => 'A categoria é obrigatória.',
             'description.required' => 'A descrição do produto é obrigatória.',
             'description.max'      => 'A descrição não deve ultrapassar 255 caracteres.',
             'cost_price.required'  => 'Informe o preço de custo.',
@@ -92,7 +93,6 @@ class StoreProductRequest extends FormRequest
             // SEO
             'meta_title.max'       => 'O título SEO não deve ultrapassar 70 caracteres.',
             'meta_description.max' => 'A meta descrição não deve ultrapassar 160 caracteres.',
-            'canonical_url.url'    => 'O formato da URL Canônica é inválido.',
 
             // Imagens
             'images.required' => 'Você precisa enviar pelo menos uma imagem para cadastrar o produto.',

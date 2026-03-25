@@ -5,12 +5,16 @@ import {
     Eye, EyeOff, LayoutDashboard, ChevronLeft, ChevronRight,
     Tag, ShieldCheck, Truck
 } from 'lucide-vue-next';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import StoreLayout from '@/Layouts/StoreLayout.vue'; 
 
 const props = defineProps({
     product: Object,
     relatedProducts: Array    
+});
+
+watch(() => props.product.id, () => {
+    activeImageIndex.value = 0;
 });
 
 const page = usePage();
@@ -46,6 +50,7 @@ const isPromoActive = computed(() => {
 
 const getImageUrl = (path) => {
     if (!path) return null;
+    // Garante que não duplique "products/products/"
     const cleanPath = path.startsWith('products/') ? path : `products/${path}`;
     return `/storage/${cleanPath}`;
 };
@@ -73,7 +78,7 @@ const formatCurrency = (value) => {
         <title>{{ seoData.meta_title || product.description }}</title>
         <meta name="description" :content="seoData.meta_description" />
         <meta name="keywords" :content="seoData.meta_keywords" />
-        <link rel="canonical" :href="seoData.canonical_url || page.url" />
+        <link rel="slug" :href="seoData.slug_url || page.url" />
         <component v-if="seoData.schema_markup" is="script" type="application/ld+json" v-html="seoData.schema_markup" />
     </Head>
 

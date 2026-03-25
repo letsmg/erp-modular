@@ -41,9 +41,15 @@ return new class extends Migration {
             
             // Opcional: frete grátis por produto
             $table->boolean('free_shipping')->default(false);
-            
-            $table->timestamps();
+             $table->foreignId('category_id')
+                ->nullable()
+                ->after('supplier_id')
+                ->constrained()
+                ->nullOnDelete();
 
+            $table->timestamps();
+            
+            $table->index('category_id');
             $table->index('supplier_id');
             $table->index('is_active');
             $table->index('is_featured');

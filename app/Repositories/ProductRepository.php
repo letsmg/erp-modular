@@ -75,7 +75,18 @@ class ProductRepository
      */
     public function update(Product $product, array $data) 
     { 
-        $product->update($data); 
+        // Captura apenas os campos que realmente existem na tabela de produtos
+        // Isso evita erros se passarmos dados de SEO ou imagens no array $data
+        $productFields = [
+            'description', 'supplier_id', 'barcode', 'brand', 'model', 
+            'collection', 'size', 'gender', 'stock_quantity', 'slug',
+            'cost_price', 'sale_price', 'promo_price', 'promo_start_at', 
+            'promo_end_at', 'weight', 'width', 'height', 'length', 'free_shipping'
+        ];
+
+        $filteredData = collect($data)->only($productFields)->toArray();
+
+        $product->update($filteredData); 
         return $product; 
     }
 
