@@ -10,12 +10,13 @@ use Inertia\Inertia;
 use App\Models\Supplier;
 use Illuminate\Http\Request;
 use App\Models\Category;
-
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class ProductController extends Controller
 {
     protected $service;
     protected $repository;
+    use AuthorizesRequests;
 
     public function __construct(ProductService $service, ProductRepository $repository)
     {
@@ -28,6 +29,8 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
+        $this->authorize('viewAny', Product::class);
+
         $filters = $request->only(['search']);
         
         return Inertia::render('Products/Index', [
@@ -74,6 +77,7 @@ class ProductController extends Controller
      */
     public function update(Request $request, Product $product)
     {
+        $this->authorize('update', $product);
         $this->service->updateProduct($product, $request->all(), $request);
 
         return redirect()->route('products.index')
@@ -85,6 +89,8 @@ class ProductController extends Controller
      */
     public function toggle(Product $product)
     {
+        $this->authorize('toggle', Product::class);
+
         $product->update(['is_active' => !$product->is_active]);
         return back()->with('message', 'Status de ativação atualizado!');
     }
@@ -94,6 +100,8 @@ class ProductController extends Controller
      */
     public function toggleFeatured(Product $product)
     {
+        $this->authorize('toggle', $product);
+        
         $this->repository->toggleFeatured($product);
         return back()->with('message', 'Status de destaque atualizado!');
     }
@@ -103,6 +111,8 @@ class ProductController extends Controller
      */
     public function destroy(Product $product)
     {
+        $this->authorize('delete', $product);
+
         $this->service->deleteProduct($product);
         return redirect()->route('products.index')->with('message', 'Removido com sucesso.');
     }

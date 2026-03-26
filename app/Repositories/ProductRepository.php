@@ -64,29 +64,58 @@ class ProductRepository
     { 
         $user = auth()->user();
 
-        // 🛡️ Regra de Negócio: Admin (1) já cadastra como Ativo.
+        // 1. Definimos o status de ativação
         $data['is_active'] = ($user && $user->access_level == 1);
 
-        return Product::create($data); 
-    }
+        // 2. Criamos uma lista com os campos que pertencem à tabela 'seos'
+        $seoFields = ['meta_title', 'meta_description', 'meta_keywords', 'h1', 'text1'];
+        
+        // 3. O SEGREDO: Criamos um array excluindo os campos de SEO
+        // Isso evita que o SQL tente inserir 'meta_title' na tabela 'products'
+        $productData = collect($data)->except($seoFields)->toArray();
 
+        // 4. Salvamos o Produto com os dados limpos
+        $product = Product::create($productData);
+
+        // 5. Agora pegamos apenas os dados de SEO para salvar na tabela correta
+        $seoData = collect($data)->only($seoFields)->filter()->toArray();
+
+        if (!empty($seoData)) {
+            // O Laravel usa a relação MorphOne para criar o registro em 'seos'
+            $product->seo()->create($seoData);
+        }
+
+        return $product; 
+    }
     /**
      * Atualiza os dados básicos do produto.
      */
     public function update(Product $product, array $data) 
     { 
-        // Captura apenas os campos que realmente existem na tabela de produtos
-        // Isso evita erros se passarmos dados de SEO ou imagens no array $data
+        // 1. Campos que permitimos atualizar via request
         $productFields = [
             'description', 'supplier_id', 'barcode', 'brand', 'model', 
             'collection', 'size', 'gender', 'stock_quantity', 'slug',
             'cost_price', 'sale_price', 'promo_price', 'promo_start_at', 
-            'promo_end_at', 'weight', 'width', 'height', 'length', 'free_shipping'
+            'promo_end_at', 'weight', 'width', 'height', 'length', 'free_shipping',
+            'is_active' 
         ];
 
         $filteredData = collect($data)->only($productFields)->toArray();
 
+        // 2. Trava de Segurança
+        $user = auth()->user();
+        if ($user && $user->access_level !== 1) {
+            // Se não for admin, removemos o is_active do que será salvo
+            unset($filteredData['is_active']);
+        }
+
+        // 3. Atualização
+        // Se filteredData tiver 'description', ela TEM que ser salva aqui
         $product->update($filteredData); 
+        
+        //dump($product->getChanges());
+
         return $product; 
     }
 

@@ -4,6 +4,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\CategoryController; // ✅ ADICIONADO
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StoreController;
@@ -20,9 +21,12 @@ Route::get('/sitemap.xml', [SitemapController::class, 'index']);
 
 Route::get('/', [StoreController::class, 'index'])->name('store.index');
 
-// ✅ STORE USA SLUG (PERFEITO)
+// ✅ STORE USA SLUG
 Route::get('/store/product/{product:slug}', [StoreController::class, 'show'])
     ->name('store.product');
+
+// (opcional futuro)
+// Route::get('/store/category/{category:slug}', ...);
 
 Route::post('/terms/accept', [StoreController::class, 'acceptTerms'])
     ->name('store.terms.accept');
@@ -63,16 +67,29 @@ Route::middleware(['auth'])->group(function () {
     |--------------------------------------------------------------------------
     */
 
-    // ✅ 👁️ PREVIEW FORÇANDO ID
+    // 👁️ PREVIEW (FORÇANDO ID)
     Route::get('/products/{product:id}/preview', [ProductController::class, 'preview'])
         ->name('products.preview');
 
-    // ✅ ⭐ FEATURED FORÇANDO ID
+    // ⭐ FEATURED (FORÇANDO ID)
     Route::patch('/products/{product:id}/toggle-featured', [ProductController::class, 'toggleFeatured'])
         ->name('products.toggle-featured');
 
-    // ✅ CRUD (já funciona, pois usa implicit binding corretamente)
+    // 🔥 ATIVAR / DESATIVAR (IMPORTANTE: também forçar ID)
+    Route::patch('/products/{product:id}/toggle', [ProductController::class, 'toggle'])
+        ->name('products.toggle');
+
+    // CRUD
     Route::resource('products', ProductController::class);
+
+    /*
+    |--------------------------------------------------------------------------
+    | CATEGORIES ✅ (NOVO)
+    |--------------------------------------------------------------------------
+    */
+
+    // 🔥 PADRÃO ADMIN = ID (recomendado)
+    Route::resource('categories', CategoryController::class);
 
     /*
     |--------------------------------------------------------------------------
@@ -90,8 +107,6 @@ Route::middleware(['auth'])->group(function () {
 
     Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
     Route::get('/reports/products', [ReportController::class, 'products'])->name('reports.products');
-    Route::patch('/products/{product}/toggle', [ProductController::class, 'toggle'])
-    ->name('products.toggle');
 
     /*
     |--------------------------------------------------------------------------

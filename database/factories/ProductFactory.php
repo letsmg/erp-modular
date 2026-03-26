@@ -3,17 +3,22 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use App\Models\Supplier;
+use App\Models\Category;
+use App\Models\Seo;
+
 
 class ProductFactory extends Factory
 {
     public function definition(): array
     {
         return [
-            // Usando sentence (uma frase curta) ou words (palavras soltas)
-            'description'    => ucfirst($this->faker->words(3, true)), 
+            'supplier_id'    => Supplier::factory(),
+            'category_id'    => Category::factory(),
+            'description'    => ucfirst($this->faker->words(3, true)),
             'brand'          => $this->faker->company(),
-            'model'          => $this->faker->bothify('??-###'), // Ex: AB-123
-            'size'           => $this->faker->randomElement(['P', 'M', 'G', 'GG', '42', '44']),
+            'model'          => $this->faker->bothify('??-###'),
+            'size'           => $this->faker->randomElement(['P', 'M', 'G', 'GG']),
             'collection'     => 'Coleção ' . $this->faker->word(),
             'gender'         => $this->faker->randomElement(['Masculino', 'Feminino', 'Unissex']),
             'cost_price'     => $this->faker->randomFloat(2, 50, 150),
@@ -21,7 +26,25 @@ class ProductFactory extends Factory
             'barcode'        => $this->faker->ean13(),
             'stock_quantity' => $this->faker->numberBetween(10, 100),
             'is_active'      => true,
-            'is_featured'    => $this->faker->boolean(20), // 20% de chance de ser destaque
+            'is_featured'    => false,
+            'weight'         => $this->faker->randomFloat(2, 0.1, 5),
+            'width'          => $this->faker->numberBetween(10, 100),
+            'height'         => $this->faker->numberBetween(10, 100),
+            'length'         => $this->faker->numberBetween(10, 100),
         ];
+    }
+
+    public function configure()
+    {
+        return $this->afterCreating(function (\App\Models\Product $product) {
+            $product->seo()->create([
+                // Limitamos para 65 para ter uma margem de segurança
+                'meta_title'       => $this->faker->text(65), 
+                'meta_description' => $this->faker->text(160),
+                'meta_keywords'    => implode(',', $this->faker->words(5)),
+                'h1'               => $this->faker->text(70),
+                'text1'            => $this->faker->paragraph(),
+            ]);
+        });
     }
 }

@@ -17,15 +17,7 @@ class Category extends Model
         'slug',
         'parent_id',
         'is_active'
-    ];
-
-    /**
-     * 🔥 Usar slug nas rotas (igual Product)
-     */
-    public function getRouteKeyName()
-    {
-        return 'slug';
-    }
+    ];    
 
     /**
      * 🔗 Relação com produtos

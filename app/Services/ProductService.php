@@ -59,12 +59,6 @@ class ProductService
                 $this->handleImageUpload($product, $request->file('new_images'), $lastOrder + 1);
             }
 
-            if (!empty($data['slug'])) {
-                $data['slug'] = Str::slug($data['slug']);
-            } elseif (isset($data['description']) && $product->description !== $data['description']) {
-                $data['slug'] = $this->generateSlug($data['description']);
-            }
-
             $product = $this->repository->update($product, $data);
 
             $this->syncSeo($product, $request->all());
