@@ -21,9 +21,53 @@ const {
 } = useProductForm(props);
 
 const handleShortcut = (e) => {
-    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'p') {
+    // Verifica se é teclado numérico (location 3) - Ctrl+Alt pode não funcionar bem
+    const isNumpad = e.location === 3 || e.code.startsWith('Numpad');
+    
+    // Para teclado numérico, usa apenas keyCode/key sem exigir Ctrl+Alt
+    if (isNumpad) {
+        if (e.key === '1' || e.code === 'Numpad1' || e.keyCode === 97 || e.keyCode === 49) {
+            e.preventDefault();
+            fillTestForm();
+            return;
+        }
+        if (e.key === '2' || e.code === 'Numpad2' || e.keyCode === 98 || e.keyCode === 50) {
+            e.preventDefault();
+            clearCurrentForm();
+            return;
+        }
+    }
+
+    // Para teclado QWERTY, aceita tanto com Ctrl+Alt quanto sem Ctrl+Alt (caracteres especiais)
+    // Aceita caracteres especiais ¹ e ² quando pressionados sozinhos
+    if ((e.ctrlKey && e.altKey && (
+        e.key === '1' || 
+        e.code === 'Digit1' ||
+        e.keyCode === 49 ||
+        e.which === 49
+    )) || (
+        !e.ctrlKey && !e.altKey && (
+            e.key === '¹' ||  // Caractere especial ¹
+            e.key === '²'    // Caractere especial ²
+        )
+    )) {
+        if (e.key === '¹' || e.key === '1') {
+            e.preventDefault();
+            fillTestForm();
+        }
+    }
+
+    // Ctrl+Alt+2 ou caractere especial ² para limpar
+    if ((e.ctrlKey && e.altKey && (
+        e.key === '2' || 
+        e.code === 'Digit2' ||
+        e.keyCode === 50 ||
+        e.which === 50
+    )) || (
+        !e.ctrlKey && !e.altKey && e.key === '²'
+    )) {
         e.preventDefault();
-        fillTestForm();
+        clearCurrentForm();
     }
 };
 
@@ -280,4 +324,16 @@ onUnmounted(() => window.removeEventListener('keydown', handleShortcut));
                             <div><label class="block text-[10px] font-black uppercase text-gray-400 mb-2">Subítulo (H2)</label><input v-model="form.h2" type="text" class="w-full border-gray-100 bg-gray-50 rounded-2xl font-bold" /></div>
                             <div><label class="block text-[10px] font-black uppercase text-gray-400 mb-2">Descrição Secundária / Detalhes (Text 2)</label><textarea v-model="form.text2" rows="3" class="w-full border-gray-100 bg-gray-50 rounded-2xl font-bold"></textarea></div>
                         </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-6 border-t border-gray-100 pt-8">
+                    <button type="submit" :disabled="form.processing" class="bg-emerald-600 hover:bg-emerald-700 active:scale-95 active:shadow-lg text-white px-12 py-5 rounded-3xl font-black uppercase text-[10px] tracking-[0.3em] shadow-2xl shadow-emerald-500/20 hover:shadow-xl transition-all duration-200 flex items-center gap-3 disabled:opacity-50 disabled:scale-100 transform cursor-pointer">
+                        <Save class="w-4 h-4" />
+                        {{ form.processing ? 'Salvando...' : 'Salvar Produto' }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </AuthenticatedLayout>
 </template>

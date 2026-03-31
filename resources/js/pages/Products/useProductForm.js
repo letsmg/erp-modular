@@ -114,7 +114,7 @@ export function useProductForm(props) {
     };
 
     // Função de preenchimento para uso externo/atalho
-    const fillTestForm = () => fillFormData(form, props.suppliers);
+    const fillTestForm = () => fillFormData(form, props.suppliers, props.categories);
 
     // Função de limpeza para uso externo/atalho
     const clearCurrentForm = () => {

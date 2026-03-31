@@ -217,13 +217,14 @@ const destroy = (id) => {
                         v-for="(link, k) in products.links" 
                         :key="k"
                         :href="link.url || '#'"
-                        v-html="link.label"
                         :class="[
                             'px-4 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer',
                             link.active ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/20' : 'bg-white text-gray-500 hover:bg-emerald-50 hover:text-emerald-600',
                             !link.url ? 'opacity-50 cursor-not-allowed' : 'active:scale-95 active:shadow-lg'
                         ]"
-                    />
+                    >
+                        {{ link.label }}
+                    </Link>
                 </div>
             </div>
         </div>

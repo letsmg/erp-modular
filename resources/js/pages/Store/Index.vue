@@ -93,13 +93,17 @@ const {
                 
                 <nav v-if="products.links?.length > 3" 
                      class="sticky top-[80px] z-30 py-4 bg-slate-50/90 backdrop-blur-xl mb-10 flex justify-center flex-wrap gap-2 border-b border-slate-100/50 rounded-b-3xl">
-                    <Link v-for="(link, k) in products.links" :key="k"
-                        :href="link.url || '#'" v-html="link.label"
-                        class="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase transition-all border shadow-sm"
-                        :class="link.active 
-                            ? 'bg-slate-900 text-white border-slate-900 scale-105 shadow-lg shadow-slate-200' 
-                            : 'bg-white text-slate-400 border-slate-100 hover:bg-slate-50 hover:text-slate-900'"
-                    />
+                    <template v-for="(link, k) in products.links" :key="k">
+                        <Link
+                            :href="link.url || '#'"
+                            class="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase transition-all border shadow-sm"
+                            :class="link.active 
+                                ? 'bg-slate-900 text-white border-slate-900 scale-105 shadow-lg shadow-slate-200' 
+                                : 'bg-white text-slate-400 border-slate-100 hover:bg-slate-50 hover:text-slate-900'"
+                        >
+                            {{ link.label }}
+                        </Link>
+                    </template>
                 </nav>
 
                 <div v-if="products.data?.length" class="grid grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10">

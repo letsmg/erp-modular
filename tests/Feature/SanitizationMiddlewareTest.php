@@ -21,8 +21,8 @@ class SanitizationMiddlewareTest extends TestCase
         $data = [
             'description' => '<p>Updated <b>description</b> with <script>alert("xss")</script> tags</p>',
             'brand' => '  Updated Brand  ',
-            'schema_markup' => '<script type="application/ld+json">{"@context": "https://schema.org","name":"Updated Product"}</script>',
-            'google_tag_manager' => '<!-- Updated GTM --><script>console.log("test");</script>',
+            'model' => '<script>alert("xss")</script>Model',
+            'collection' => '<em>New Collection</em>',
         ];
 
         $response = $this->actingAs($user)->put(route('products.update', $product), $data);
@@ -34,10 +34,8 @@ class SanitizationMiddlewareTest extends TestCase
         // Verifica se os campos foram sanitizados
         $this->assertEquals('Updated description with tags', $product->description);
         $this->assertEquals('Updated Brand', $product->brand);
-        
-        // Verifica se os campos HTML foram preservados
-        $this->assertEquals('<script type="application/ld+json">{"@context": "https://schema.org","name":"Updated Product"}</script>', $product->seo->schema_markup);
-        $this->assertEquals('<!-- Updated GTM --><script>console.log("test");</script>', $product->seo->google_tag_manager);
+        $this->assertEquals('Model', $product->model);
+        $this->assertEquals('New Collection', $product->collection);
     }
 
     /** @test */

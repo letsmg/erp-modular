@@ -21,8 +21,16 @@ class SanitizeInput
         if (in_array($request->method(), ['POST', 'PUT', 'PATCH'])) {
             $input = $request->all();
             
-            // Verifica se há algum campo que possa conter HTML/JS/XML
-            $hasHtmlFields = $this->hasHtmlFields($input);
+            // APENAS schema_markup e google_tag_manager podem ter HTML
+            $htmlFields = ['schema_markup', 'google_tag_manager'];
+            $hasHtmlFields = false;
+            
+            foreach ($htmlFields as $field) {
+                if (isset($input[$field]) && is_string($input[$field])) {
+                    $hasHtmlFields = true;
+                    break;
+                }
+            }
             
             if ($hasHtmlFields) {
                 // Se há campos HTML, aplicamos sanitização seletiva
@@ -39,26 +47,7 @@ class SanitizeInput
     }
 
     /**
-     * Verifica se a requisição contém campos que podem ter HTML/JS/XML
-     */
-    private function hasHtmlFields(array $input): bool
-    {
-        $htmlFields = ['schema_markup', 'google_tag_manager', 'content', 'description', 'body'];
-        
-        foreach ($htmlFields as $field) {
-            if (isset($input[$field]) && is_string($input[$field])) {
-                // Verifica se o campo contém tags HTML
-                if ($input[$field] !== strip_tags($input[$field])) {
-                    return true;
-                }
-            }
-        }
-        
-        return false;
-    }
-
-    /**
-     * Aplica sanitização com exceções para campos específicos
+     * Aplica sanitização com exceções para campos específicos (APENAS schema_markup e google_tag_manager)
      */
     private function sanitizeWithExceptions(array $input): array
     {

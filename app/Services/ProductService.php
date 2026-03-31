@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Helpers\SanitizerHelper;
+use App\Helpers\SchemaMarkupValidator;
 use App\Models\Product;
 use App\Models\ProductImage;
 use App\Repositories\ProductRepository;
@@ -10,7 +12,6 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Google\Cloud\Vision\V1\ImageAnnotatorClient;
 use Illuminate\Support\Facades\Log;
-use App\Helpers\SanitizerHelper;
 
 class ProductService
 {
@@ -118,10 +119,18 @@ class ProductService
 
         $data = collect($input)->only($seoFields)->toArray();
 
-        // Aplica sanitização nos dados SEO, exceto schema_markup
-        $data = SanitizerHelper::sanitizeSeoData($data);
+        // Aplica sanitização em TODOS os campos, exceto schema_markup e google_tag_manager
+        $data = SanitizerHelper::sanitize($data, ['schema_markup', 'google_tag_manager']);
 
-        // ❌ REMOVIDO: slug (não existe na tabela seo)
+        // Valida e sanitiza schema_markup especificamente
+        if (isset($data['schema_markup'])) {
+            $data['schema_markup'] = SchemaMarkupValidator::validateAndSanitize($data['schema_markup']);
+        }
+
+        // Valida google_tag_manager (apenas permite scripts válidos)
+        if (isset($data['google_tag_manager'])) {
+            $data['google_tag_manager'] = $this->validateGoogleTagManager($data['google_tag_manager']);
+        }
 
         $product->seo()->updateOrCreate(
             [
@@ -130,6 +139,28 @@ class ProductService
             ],
             $data
         );
+    }
+
+    /**
+     * Valida Google Tag Manager script
+     */
+    private function validateGoogleTagManager(?string $script): ?string
+    {
+        if (empty($script)) {
+            return null;
+        }
+
+        // Permite apenas scripts GTM válidos
+        $gtmPattern = '/^\s*<!--\s*Google Tag Manager\s*-->.*?<!--\s*End Google Tag Manager\s*-->\s*$/s';
+        
+        if (!preg_match($gtmPattern, $script)) {
+            return null;
+        }
+
+        // Remove tags perigosas que não sejam GTM
+        $script = preg_replace('/<script\b(?![^>]*Google\s+Tag\s+Manager)[^<]*>.*?<\/script>/is', '', $script);
+        
+        return trim($script);
     }
 
     private function isImageSafe($image)
