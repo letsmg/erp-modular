@@ -19,13 +19,15 @@ const props = defineProps({
 // Inicializamos as refs com os valores que vêm do servidor
 const search = ref(props.filters.search || '');
 const showOnlyBlocked = ref(props.filters.blocked == 1);
+const showOnlyActive = ref(props.filters.active == 1);
 
 // 🔄 Função única para atualizar os filtros no servidor
 const updateFilters = debounce(() => {
     router.get(route('products.index'), 
         { 
             search: search.value, 
-            blocked: showOnlyBlocked.value ? 1 : 0 
+            blocked: showOnlyBlocked.value ? 1 : 0,
+            active: showOnlyActive.value ? 1 : 0
         }, 
         { 
             preserveState: true, 
@@ -44,15 +46,29 @@ watch(search, (value) => {
 
 // 🔒 Monitora o checkbox de bloqueados
 watch(showOnlyBlocked, () => {
+    // Se marcar bloqueados, desmarcar ativos (são mutuamente exclusivos)
+    if (showOnlyBlocked.value) {
+        showOnlyActive.value = false;
+    }
+    updateFilters();
+});
+
+// ✅ Monitora o checkbox de ativos
+watch(showOnlyActive, () => {
+    // Se marcar ativos, desmarcar bloqueados (são mutuamente exclusivos)
+    if (showOnlyActive.value) {
+        showOnlyBlocked.value = false;
+    }
     updateFilters();
 });
 
 // Agora os produtos filtrados vêm direto da prop, já que o servidor faz o trabalho pesado
-const filteredProducts = computed(() => {
-    const products = props.products.data || [];
-    // Ordena produtos alfabeticamente pelo description (nome)
-    return products.sort((a, b) => a.description.localeCompare(b.description));
-});
+const filteredProducts = computed(() => props.products.data);
+
+// 🧹 Limpa labels de paginação removendo entidades HTML
+const cleanPaginationLabel = (label) => {
+    return label.replace(/&raquo;/g, '»').replace(/&laquo;/g, '«').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+};
 
 const formatCurrency = (value) => {
     return new Number(value || 0).toLocaleString('pt-BR', {
@@ -107,6 +123,18 @@ const destroy = (id) => {
                         <div class="flex items-center gap-1.5">
                             <Lock class="w-3.5 h-3.5 text-red-500" />
                             <span class="text-xs font-bold uppercase text-red-600 tracking-tight">Bloqueados</span>
+                        </div>
+                    </label>
+
+                    <label class="flex items-center gap-2 cursor-pointer group bg-white border border-emerald-100 px-4 py-3 rounded-2xl hover:bg-emerald-50 transition-all shadow-sm">
+                        <input 
+                            type="checkbox" 
+                            v-model="showOnlyActive"
+                            class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 w-4 h-4"
+                        >
+                        <div class="flex items-center gap-1.5">
+                            <Eye class="w-3.5 h-3.5 text-emerald-500" />
+                            <span class="text-xs font-bold uppercase text-emerald-600 tracking-tight">Ativos</span>
                         </div>
                     </label>
 
@@ -204,7 +232,7 @@ const destroy = (id) => {
                                 <div class="flex flex-col items-center opacity-40">
                                     <PackageSearch class="w-16 h-16 mb-4 text-gray-300" />
                                     <p class="font-black uppercase text-xs tracking-widest text-gray-400">
-                                        {{ showOnlyBlocked ? 'Nenhum produto bloqueado' : 'Nenhum produto encontrado' }}
+                                        {{ showOnlyBlocked ? 'Nenhum produto bloqueado' : showOnlyActive ? 'Nenhum produto ativo' : 'Nenhum produto encontrado' }}
                                     </p>
                                 </div>
                             </td>
@@ -223,7 +251,7 @@ const destroy = (id) => {
                             !link.url ? 'opacity-50 cursor-not-allowed' : 'active:scale-95 active:shadow-lg'
                         ]"
                     >
-                        {{ link.label }}
+                        {{ cleanPaginationLabel(link.label) }}
                     </Link>
                 </div>
             </div>

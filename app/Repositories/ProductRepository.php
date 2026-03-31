@@ -24,6 +24,12 @@ class ProductRepository
             $query->where('is_active', false);
         }
 
+        // ✅ 2. Filtro de Ativos (is_active)
+        // Se o filtro 'active' vier como 1, filtramos apenas os ativos (true)
+        if (isset($filters['active']) && $filters['active'] == 1) {
+            $query->where('is_active', true);
+        }
+
         // 🔍 2. Filtro de Busca Textual
         if (!empty($filters['search'])) {
             $search = trim($filters['search']);
@@ -44,11 +50,10 @@ class ProductRepository
                     ->orWhere('promo_price', '<=', $numericValue);
                 }
             });
-
-            $query->orderByRaw('COALESCE(promo_price, sale_price) DESC');
-        } else {
-            $query->latest();
         }
+
+        // Manter ordenação consistente sempre por latest (created_at DESC)
+        $query->latest();
 
         // Importante: usamos withQueryString para manter os filtros ao trocar de página
         return $query->paginate(12)->withQueryString();
