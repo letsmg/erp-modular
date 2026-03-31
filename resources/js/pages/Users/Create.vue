@@ -2,7 +2,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, useForm, Link } from '@inertiajs/vue3';
 import { ref, onMounted, onUnmounted } from 'vue';
-import { Save, ArrowLeft, Shield, Mail, Lock, User, Eye, EyeOff, XCircle } from 'lucide-vue-next';
+import { Save, ArrowLeft, Shield, Mail, Lock, User, Eye, EyeOff, XCircle, Sparkles, X } from 'lucide-vue-next';
 import { fillFormData, clearFormData } from '@/lib/utils';
 
 const showPassword = ref(false);
@@ -46,7 +46,36 @@ onUnmounted(() => {
                 <Link :href="route('users.index')" class="text-sm font-bold text-indigo-600 hover:text-indigo-800 flex items-center transition">
                     <ArrowLeft class="w-4 h-4 mr-1" /> Voltar
                 </Link>
-                <h2 class="text-2xl font-bold text-gray-900 mt-2">Cadastrar Novo Usuário</h2>
+                <h2 class="text-3xl font-black text-gray-800 tracking-tighter uppercase">Cadastrar Novo Usuário</h2>
+            </div>
+
+            <!-- Atalhos -->
+            <div class="mb-6 flex justify-center">
+                <div class="inline-flex items-center gap-4 bg-slate-50 px-6 py-3 rounded-2xl border border-gray-200 shadow-sm">
+                    <div class="flex items-center gap-2">
+                        <Sparkles class="w-4 h-4 text-indigo-500" />
+                        <span class="text-[11px] font-bold text-indigo-600">CTRL+ALT+1</span>
+                        <span class="text-[11px] text-gray-600">Popular</span>
+                    </div>
+                    <div class="w-px h-4 bg-gray-300"></div>
+                    <div class="flex items-center gap-2">
+                        <X class="w-4 h-4 text-red-500" />
+                        <span class="text-[11px] font-bold text-red-600">CTRL+ALT+2</span>
+                        <span class="text-[11px] text-gray-600">Limpar</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botões de Ação -->
+            <div class="mb-6 flex justify-center gap-4">
+                <button type="button" @click="filler" class="bg-slate-600 hover:bg-slate-700 active:scale-95 active:shadow-lg text-white px-6 py-3 rounded-xl font-bold text-sm uppercase tracking-wider shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2 transform cursor-pointer">
+                    <Sparkles class="w-4 h-4" />
+                    Popular Formulário
+                </button>
+                <button type="button" @click="clearer" class="bg-slate-600 hover:bg-slate-700 active:scale-95 active:shadow-lg text-white px-6 py-3 rounded-xl font-bold text-sm uppercase tracking-wider shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-2 transform cursor-pointer">
+                    <X class="w-4 h-4" />
+                    Limpar Formulário
+                </button>
             </div>
 
             <Transition
@@ -149,12 +178,6 @@ onUnmounted(() => {
                     </div>
                 </div>
 
-                <div class="flex justify-end italic text-[10px] text-gray-400 uppercase tracking-tighter">
-                    Atalhos: 
-                    <span class="font-bold text-indigo-400 mx-1 underline">CTRL+SHIFT+P</span> Popular | 
-                    <span class="font-bold text-red-400 mx-1 underline">CTRL+SHIFT+L</span> Limpar
-                </div>
-
                 <div class="flex justify-end gap-4 items-center">
                     <span v-if="form.recentlySuccessful" class="text-sm text-green-600 font-bold animate-pulse">
                         Salvo com sucesso!
@@ -163,7 +186,7 @@ onUnmounted(() => {
                     <button 
                         type="submit" 
                         :disabled="form.processing" 
-                        class="bg-indigo-600 text-white px-10 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-indigo-700 transition shadow-lg shadow-indigo-500/20 disabled:opacity-50"
+                        class="bg-emerald-600 hover:bg-emerald-700 active:scale-95 active:shadow-lg text-white px-10 py-3 rounded-xl font-bold flex items-center gap-2 transition-all duration-200 shadow-lg shadow-emerald-500/20 hover:shadow-xl disabled:opacity-50 disabled:scale-100 transform cursor-pointer"
                     >
                         <Save class="w-5 h-5" /> {{ form.processing ? 'Salvando...' : 'Salvar Usuário' }}
                     </button>

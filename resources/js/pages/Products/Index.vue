@@ -48,7 +48,11 @@ watch(showOnlyBlocked, () => {
 });
 
 // Agora os produtos filtrados vêm direto da prop, já que o servidor faz o trabalho pesado
-const filteredProducts = computed(() => props.products.data || []);
+const filteredProducts = computed(() => {
+    const products = props.products.data || [];
+    // Ordena produtos alfabeticamente pelo description (nome)
+    return products.sort((a, b) => a.description.localeCompare(b.description));
+});
 
 const formatCurrency = (value) => {
     return new Number(value || 0).toLocaleString('pt-BR', {

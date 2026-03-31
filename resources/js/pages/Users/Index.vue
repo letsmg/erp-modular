@@ -34,7 +34,7 @@ const handleDelete = (user) => {
 
         <div class="sm:flex sm:items-center sm:justify-between mb-8">
             <div>
-                <h2 class="text-2xl font-bold text-gray-900 tracking-tight">Usuários</h2>
+                <h2 class="text-3xl font-black text-gray-900 tracking-tighter uppercase">Usuários</h2>
                 <p class="mt-1 text-sm text-gray-500">Lista de colaboradores com acesso ao ERP Vue Laravel.</p>
             </div>
             <div class="mt-4 sm:mt-0">
