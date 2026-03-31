@@ -6,6 +6,7 @@ use App\Models\Supplier;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Validation\Rule;
+use App\Helpers\SanitizerHelper;
 
 class SupplierController extends Controller
 {
@@ -45,6 +46,9 @@ class SupplierController extends Controller
             'zip_code.required'      => 'O CEP é obrigatório.',
             'contact_name_1.required' => 'O nome do contato principal é obrigatório.',
         ]);
+
+        // Sanitiza todos os dados antes de salvar
+        $data = SanitizerHelper::sanitize($data);
 
         Supplier::create($data);
 
@@ -95,6 +99,9 @@ class SupplierController extends Controller
             'cnpj.unique'           => 'Este CNPJ já pertence a outro fornecedor.',
             'email.unique'          => 'Este email já está sendo usado por outro fornecedor.',
         ]);
+
+        // Sanitiza todos os dados antes de salvar
+        $data = SanitizerHelper::sanitize($data);
 
         $supplier->update($data);
 

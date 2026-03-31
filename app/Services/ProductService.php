@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Google\Cloud\Vision\V1\ImageAnnotatorClient;
 use Illuminate\Support\Facades\Log;
+use App\Helpers\SanitizerHelper;
 
 class ProductService
 {
@@ -116,6 +117,9 @@ class ProductService
         ];
 
         $data = collect($input)->only($seoFields)->toArray();
+
+        // Aplica sanitização nos dados SEO, exceto schema_markup
+        $data = SanitizerHelper::sanitizeSeoData($data);
 
         // ❌ REMOVIDO: slug (não existe na tabela seo)
 

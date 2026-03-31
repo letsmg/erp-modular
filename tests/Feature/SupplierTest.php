@@ -46,16 +46,16 @@ class SupplierTest extends TestCase
         $user = User::factory()->create();
 
         $dados = [
-            'company_name' => 'Fornecedor de Teste LTDA',
+            'company_name' => '<b>Fornecedor</b> de Teste <script>alert("xss")</script> LTDA',
             'cnpj' => '12.345.678/0001-90',
             'state_registration' => '123456789',
             'email' => 'contato@fornecedor.com',
-            'address' => 'Rua de Teste, 123',
-            'neighborhood' => 'Centro',
+            'address' => '<p>Rua de Teste, 123</p>',
+            'neighborhood' => '  Centro  ',
             'city' => 'São Paulo',
             'state' => 'SP',
             'zip_code' => '01001-000',
-            'contact_name_1' => 'João Silva',
+            'contact_name_1' => '<i>João</i> Silva',
             'phone_1' => '(11) 99999-9999',
             'is_active' => true,
         ];
@@ -64,6 +64,13 @@ class SupplierTest extends TestCase
 
         $response->assertRedirect(route('suppliers.index'));
         $this->assertDatabaseHas('suppliers', ['cnpj' => '12.345.678/0001-90']);
+        
+        // Verifica se a sanitização foi aplicada
+        $supplier = \App\Models\Supplier::where('cnpj', '12.345.678/0001-90')->first();
+        $this->assertEquals('Fornecedor de Teste LTDA', $supplier->company_name);
+        $this->assertEquals('Rua de Teste, 123', $supplier->address);
+        $this->assertEquals('Centro', $supplier->neighborhood);
+        $this->assertEquals('João Silva', $supplier->contact_name_1);
     }
 
     /** 3. TESTE DE EDIÇÃO (UPDATE) **/

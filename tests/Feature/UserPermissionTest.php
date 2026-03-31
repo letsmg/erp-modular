@@ -102,7 +102,7 @@ class UserPermissionTest extends TestCase
         $senhaForte = 'Senha@Forte123';
 
         $novoUsuario = [
-            'name' => 'Clone',
+            'name' => '<b>Clone</b> <script>alert("xss")</script>',
             'email' => 'clone@teste.com',
             'password' => $senhaForte,
             'password_confirmation' => $senhaForte,
@@ -122,6 +122,10 @@ class UserPermissionTest extends TestCase
             'email' => 'clone@teste.com',
             'is_active' => 1
         ]);
+        
+        // Verifica se a sanitização foi aplicada
+        $user = User::where('email', 'clone@teste.com')->first();
+        $this->assertEquals('Clone', $user->name);
     }
 
     public function test_usuario_comum_nao_pode_deletar_ninguem()

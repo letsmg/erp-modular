@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\Product;
 use App\Models\Supplier;
+use App\Helpers\SanitizerHelper;
 
 class ProductRepository
 {
@@ -70,20 +71,23 @@ class ProductRepository
     { 
         $user = auth()->user();
 
-        // 1. Definimos o status de ativação
+        // 1. Sanitiza todos os dados antes de processar
+        $data = SanitizerHelper::sanitize($data);
+
+        // 2. Definimos o status de ativação
         $data['is_active'] = ($user && $user->access_level == 1);
 
-        // 2. Criamos uma lista com os campos que pertencem à tabela 'seos'
+        // 3. Criamos uma lista com os campos que pertencem à tabela 'seos'
         $seoFields = ['meta_title', 'meta_description', 'meta_keywords', 'h1', 'text1'];
         
-        // 3. O SEGREDO: Criamos um array excluindo os campos de SEO
+        // 4. O SEGREDO: Criamos um array excluindo os campos de SEO
         // Isso evita que o SQL tente inserir 'meta_title' na tabela 'products'
         $productData = collect($data)->except($seoFields)->toArray();
 
-        // 4. Salvamos o Produto com os dados limpos
+        // 5. Salvamos o Produto com os dados limpos
         $product = Product::create($productData);
 
-        // 5. Agora pegamos apenas os dados de SEO para salvar na tabela correta
+        // 6. Agora pegamos apenas os dados de SEO para salvar na tabela correta
         $seoData = collect($data)->only($seoFields)->filter()->toArray();
 
         if (!empty($seoData)) {
@@ -98,7 +102,10 @@ class ProductRepository
      */
     public function update(Product $product, array $data) 
     { 
-        // 1. Campos que permitimos atualizar via request
+        // 1. Sanitiza todos os dados antes de processar
+        $data = SanitizerHelper::sanitize($data);
+
+        // 2. Campos que permitimos atualizar via request
         $productFields = [
             'description', 'supplier_id', 'barcode', 'brand', 'model', 
             'collection', 'size', 'gender', 'stock_quantity', 'slug',
@@ -109,14 +116,14 @@ class ProductRepository
 
         $filteredData = collect($data)->only($productFields)->toArray();
 
-        // 2. Trava de Segurança
+        // 3. Trava de Segurança
         $user = auth()->user();
         if ($user && $user->access_level !== 1) {
             // Se não for admin, removemos o is_active do que será salvo
             unset($filteredData['is_active']);
         }
 
-        // 3. Atualização
+        // 4. Atualização
         // Se filteredData tiver 'description', ela TEM que ser salva aqui
         $product->update($filteredData); 
         
@@ -126,7 +133,7 @@ class ProductRepository
     }
 
     /**
-     * Alterna o status de destaque do produto. ⭐
+     * Alterna o status de destaque do produto. 
      */
     public function toggleFeatured(Product $product)
     {

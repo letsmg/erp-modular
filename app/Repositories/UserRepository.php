@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\User;
+use App\Helpers\SanitizerHelper;
 
 class UserRepository
 {
@@ -20,11 +21,17 @@ class UserRepository
 
     public function create(array $data): User
     {
+        // Sanitiza todos os dados antes de criar
+        $data = SanitizerHelper::sanitize($data);
+        
         return User::create($data);
     }
 
     public function update(User $user, array $data): void
     {
+        // Sanitiza todos os dados antes de atualizar
+        $data = SanitizerHelper::sanitize($data);
+        
         $user->update($data);
     }
 

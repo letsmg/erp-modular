@@ -34,7 +34,7 @@ ERP Vue Laravel é um ERP moderno projetado para entregar:
 * ⚡ Alta performance
 * 🔒 Segurança robusta
 * 🧠 Excelente experiência para desenvolvedores
-* 🧩 Arquitetura modular
+* 🧩 Arquitetura monolítica organizada em camadas
 * 🚀 Desenvolvimento rápido usando Inertia.js
 
 O projeto foca em **simplicidade sem perder escalabilidade**.
@@ -248,7 +248,7 @@ ERP Vue Laravel is a modern ERP designed to deliver:
 * ⚡ High performance
 * 🔒 Robust security
 * 🧠 Excellent developer experience
-* 🧩 Modular architecture
+* 🧩 Monolithic architecture organized in layers
 * 🚀 Rapid development using Inertia.js
 
 The project focuses on **simplicity without sacrificing scalability**.

@@ -73,13 +73,13 @@ class ProductTest extends TestCase
         // 1. Geramos os dados base do Produto
         $productData = Product::factory()->make(['is_active' => true])->toArray();
 
-        // 2. Adicionamos os campos de SEO
+        // 2. Adicionamos os campos de SEO (com HTML que será sanitizado)
         $seoData = [
-            'meta_title'       => 'Título de Teste',
-            'meta_description' => 'Descrição de teste para o produto.',
+            'meta_title'       => '<b>Título</b> de Teste',
+            'meta_description' => '<p>Descrição de teste para o produto.</p>',
             'meta_keywords'    => 'teste,laravel,seo',
-            'h1'               => 'H1 de Teste',
-            'text1'            => 'Texto longo de teste',
+            'h1'               => '<h1>H1</h1> de Teste',
+            'text1'            => '<em>Texto</em> longo de teste',
         ];
 
         // 3. Juntamos tudo e adicionamos a imagem
@@ -95,6 +95,12 @@ class ProductTest extends TestCase
         $product = Product::latest('id')->first();
         $this->assertNotNull($product);
         $this->assertFalse((bool)$product->is_active);
+        
+        // Verifica se a sanitização foi aplicada nos campos SEO
+        $this->assertEquals('Título de Teste', $product->seo->meta_title);
+        $this->assertEquals('Descrição de teste para o produto.', $product->seo->meta_description);
+        $this->assertEquals('H1 de Teste', $product->seo->h1);
+        $this->assertEquals('Texto longo de teste', $product->seo->text1);
     }
 
     /**
@@ -133,7 +139,7 @@ class ProductTest extends TestCase
         // Admin apaga
         $this->actingAs($admin)
             ->delete(route('products.destroy', $product->id))
-            ->assertStatus(302); // Redirecionamento após delete
+            ->assertRedirect(); // Redirecionamento após delete
 
         $this->assertDatabaseMissing('products', ['id' => $product->id]);
     }
