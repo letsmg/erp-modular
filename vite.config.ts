@@ -6,6 +6,11 @@ import { defineConfig } from 'vite';
 import path from 'path';
 
 export default defineConfig({
+    server: {
+        port: 5174,
+        host: '127.0.0.1', // Força IPv4
+        strictPort: true
+    },
     plugins: [
         laravel({
             input: ['resources/js/app.ts'], // Se o arquivo for .ts

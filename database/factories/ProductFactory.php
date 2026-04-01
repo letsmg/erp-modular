@@ -26,7 +26,7 @@ class ProductFactory extends Factory
             'barcode'        => $this->faker->ean13(),
             'stock_quantity' => $this->faker->numberBetween(10, 100),
             'is_active'      => true,
-            'is_featured'    => false,
+            'is_featured'    => $this->faker->boolean(30), // 30% de chance de ser featured
             'weight'         => $this->faker->randomFloat(2, 0.1, 5),
             'width'          => $this->faker->numberBetween(10, 100),
             'height'         => $this->faker->numberBetween(10, 100),

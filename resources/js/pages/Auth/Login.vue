@@ -1,10 +1,12 @@
 <script setup>
+import { Head } from '@inertiajs/vue3';
 import { useForm, Link } from '@inertiajs/vue3';
 import { ref } from 'vue';
-import { Eye, EyeOff, LogIn, ShieldCheck, Globe, Monitor } from 'lucide-vue-next';
+import { Eye, EyeOff, LogIn, ShieldCheck, Globe, Monitor, ArrowLeft } from 'lucide-vue-next';
+import GuestLayout from '../../Layouts/GuestLayout.vue';
 
 // Recebe o IP enviado pelo Controller
-defineProps({ 
+const props = defineProps({ 
     errors: Object,
     userIp: String 
 });
@@ -18,21 +20,15 @@ const form = useForm({
 const showPassword = ref(false);
 
 const submit = () => {
-    form.post('/login', {
-        onFinish: () => form.reset('password'),
-        onError: (errors) => {
-            if (Object.keys(errors).length === 0) {
-                window.location.reload();
-            }
-        },
-    });
+    form.post(route('login.post'));
 };
 </script>
 
 <template>
-    <div class="min-h-screen flex items-center justify-center bg-slate-900 px-4 font-sans text-gray-900">
+    <GuestLayout>
+        <Head title="Login - ERP Vue Laravel" />
+        
         <div class="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
-
             <div class="mb-6 flex justify-center">
                 <Link href="/" class="inline-flex items-center text-xs font-bold text-gray-400 hover:text-blue-600 transition group">
                     <ArrowLeft class="w-4 h-4 mr-1 group-hover:-translate-x-1 transition-transform" />
@@ -60,24 +56,22 @@ const submit = () => {
                         <input :type="showPassword ? 'text' : 'password'" v-model="form.password" required
                             class="block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 transition"
                             :class="{ 'border-red-500 ring-1 ring-red-500': errors.password }">
-                        <button type="button" @click="showPassword = !showPassword"
-                            class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition">
+                        <button type="button" @click="showPassword = !showPassword" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition">
                             <component :is="showPassword ? EyeOff : Eye" class="h-5 w-5" />
                         </button>
                     </div>
+                    <div v-if="errors.password" class="text-red-500 text-xs mt-1 font-medium">{{ errors.password }}</div>
                 </div>
 
                 <div class="flex items-center justify-between">
                     <div class="flex items-center">
-                        <input id="remember" v-model="form.remember" type="checkbox" 
-                            class="h-4 w-4 text-blue-600 border-gray-300 rounded cursor-pointer focus:ring-blue-500">
+                        <input id="remember" v-model="form.remember" type="checkbox" class="h-4 w-4 text-blue-600 border-gray-300 rounded cursor-pointer focus:ring-blue-500">
                         <label for="remember" class="ml-2 block text-sm text-gray-700 cursor-pointer">Lembrar / Remember</label>
                     </div>
                     <Link :href="route('password.request')" class="text-sm font-medium text-blue-600 hover:text-blue-500 transition">Esqueceu? / Forgot?</Link>
                 </div>
 
-                <button type="submit" :disabled="form.processing"
-                    class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition transform active:scale-95">
+                <button type="submit" :disabled="form.processing" class="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 transition transform active:scale-95">
                     <LogIn v-if="!form.processing" class="w-5 h-5 mr-2" />
                     {{ form.processing ? 'Verificando...' : 'ENTRAR / LOGIN' }}
                 </button>
@@ -106,12 +100,12 @@ const submit = () => {
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="flex justify-center items-center mt-5 text-gray-400 space-x-1">
                     <Globe class="w-3 h-3" />
                     <span class="text-[9px] uppercase tracking-widest font-bold">Authorized: Brazil (BR) only</span>
                 </div>
             </div>
         </div>
-    </div>
+    </GuestLayout>
 </template>

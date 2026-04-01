@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="icon" type="image/x-icon" href="{{ asset('icon.ico') }}">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 
     {{-- VITE (desabilitado no testing) --}}
     @if (!app()->environment('testing'))
@@ -37,6 +37,10 @@
 
     {{-- 3. Title --}}
     <title inertia>{{ config('app.name', 'ERP Vue Laravel') }}</title>
+
+    {{-- Favicon --}}
+    <link rel="icon" type="image/x-icon" href="{{ asset('icon.ico') }}">
+    <link rel="shortcut icon" type="image/x-icon" href="{{ asset('icon.ico') }}">
 
     @routes
     @inertiaHead
