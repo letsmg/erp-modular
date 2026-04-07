@@ -79,12 +79,12 @@ class AuthService
         // 🔥 4. VALIDAÇÃO DE PERFIL POR PORTAL
         if ($isClientAuth) {
             // Se for login de cliente, o usuário DEVE ser um CLIENT
-            if ($user->access_level !== AccessLevel::CLIENT) {
+            if (!$user->isClient()) {
                 return false;
             }
         } else {
             // Se for login administrativo, o usuário NÃO PODE ser um CLIENT
-            if ($user->access_level === AccessLevel::CLIENT) {
+            if ($user->isClient()) {
                 return false;
             }
         }

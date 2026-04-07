@@ -2,14 +2,15 @@
 
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\Auth\ClientAuthController;
+use App\Http\Controllers\Auth\SelfClientAuthController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\ProductController;
-use App\Http\Controllers\CategoryController; // ✅ ADICIONADO
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StoreController;
+use App\Http\Controllers\SearchSuggestionsController;
+use App\Http\Controllers\RedisMonitorController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -22,6 +23,9 @@ use Inertia\Inertia;
 Route::get('/sitemap.xml', [SitemapController::class, 'index']);
 
 Route::get('/', [StoreController::class, 'index'])->name('store.index');
+
+// Endpoint JSON para Load More
+Route::get('/store/products', [StoreController::class, 'getProducts'])->name('store.products.json');
 
 // ✅ STORE USA SLUG
 Route::get('/store/product/{product:slug}', [StoreController::class, 'show'])
@@ -58,12 +62,12 @@ Route::middleware('guest')->group(function () {
 */
 
 Route::middleware('guest')->prefix('cliente')->name('client.')->group(function () {
-    Route::get('/login', [ClientAuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [ClientAuthController::class, 'login'])->name('login.post');
-    Route::get('/registrar', [ClientAuthController::class, 'showRegister'])->name('register');
-    Route::post('/registrar', [ClientAuthController::class, 'register'])->name('register.post');
-    Route::get('/esqueci-senha', [ClientAuthController::class, 'showForgotPassword'])->name('forgot.password');
-    Route::post('/esqueci-senha', [ClientAuthController::class, 'sendResetLinkEmail'])->name('forgot.password.post');
+    Route::get('/login', [SelfClientAuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [SelfClientAuthController::class, 'login'])->name('login.post');
+    Route::get('/registrar', [SelfClientAuthController::class, 'showRegistrationForm'])->name('register');
+    Route::post('/registrar', [SelfClientAuthController::class, 'register'])->name('register.post');
+    Route::get('/esqueci-senha', [SelfClientAuthController::class, 'showForgotPassword'])->name('forgot.password');
+    Route::post('/esqueci-senha', [SelfClientAuthController::class, 'sendResetLinkEmail'])->name('forgot.password.post');
 });
 
 /*
@@ -101,20 +105,19 @@ Route::middleware(['auth', 'staff'])->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | CATEGORIES ✅ (NOVO)
-    |--------------------------------------------------------------------------
-    */
-
-    // 🔥 PADRÃO ADMIN = ID (recomendado)
-    Route::resource('categories', CategoryController::class);
-
-    /*
-    |--------------------------------------------------------------------------
     | OUTROS
     |--------------------------------------------------------------------------
     */
 
-    Route::resource('suppliers', SupplierController::class);
+    Route::middleware('auth', 'staff')->prefix('suppliers')->group(function () {
+    Route::get('/', [SupplierController::class, 'index'])->name('suppliers.index');
+    Route::post('/', [SupplierController::class, 'store'])->name('suppliers.store');
+    Route::get('/create', [SupplierController::class, 'create'])->name('suppliers.create');
+    Route::get('/{supplier}', [SupplierController::class, 'show'])->name('suppliers.show');
+    Route::get('/{supplier}/edit', [SupplierController::class, 'edit'])->name('suppliers.edit');
+    Route::put('/{supplier}', [SupplierController::class, 'update'])->name('suppliers.update');
+    Route::delete('/{supplier}', [SupplierController::class, 'destroy'])->name('suppliers.destroy');
+});
 
     /*
     |--------------------------------------------------------------------------
@@ -171,7 +174,58 @@ Route::middleware(['auth', 'staff'])->group(function () {
 
 Route::middleware(['auth', 'client'])->prefix('cliente')->name('client.')->group(function () {
     Route::get('/dashboard', fn () => Inertia::render('Client/Dashboard'))->name('dashboard');
-    Route::get('/meus-dados', [ClientController::class, 'showClientData'])->name('profile');
-    Route::put('/meus-dados', [ClientController::class, 'updateClientData'])->name('profile.update');
-    Route::post('/logout', [ClientAuthController::class, 'logout'])->name('logout');
+    Route::get('/meus-dados', [SelfClientAuthController::class, 'profile'])->name('profile');
+    Route::get('/editar', [SelfClientAuthController::class, 'edit'])->name('edit');
+    Route::put('/meus-dados', [SelfClientAuthController::class, 'update'])->name('profile.update');
+    Route::put('/senha', [SelfClientAuthController::class, 'updatePassword'])->name('password.update');
+    Route::get('/excluir', [SelfClientAuthController::class, 'showDeleteForm'])->name('delete.form');
+    Route::delete('/excluir', [SelfClientAuthController::class, 'destroy'])->name('delete');
+    Route::get('/api/dados', [SelfClientAuthController::class, 'getClientData'])->name('api.data');
+    Route::post('/logout', [SelfClientAuthController::class, 'logout'])->name('logout');
+    
+    // Gerenciamento de Endereços
+    Route::post('/endereco', [SelfClientAuthController::class, 'storeAddress'])->name('address.store');
+    Route::put('/endereco/{address}', [SelfClientAuthController::class, 'updateAddress'])->name('address.update');
+    Route::delete('/endereco/{address}', [SelfClientAuthController::class, 'destroyAddress'])->name('address.destroy');
+    Route::patch('/endereco/{address}/entrega', [SelfClientAuthController::class, 'setDeliveryAddress'])->name('address.set-delivery');
+});
+
+/*
+|--------------------------------------------------------------------------
+| SEARCH SUGGESTIONS (INTERNO)
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('search')->group(function () {
+    // Obtém sugestões para autocomplete
+    Route::get('/suggestions', [SearchSuggestionsController::class, 'index'])
+        ->name('search.suggestions');
+    
+    // Registra busca do usuário
+    Route::post('/register', [SearchSuggestionsController::class, 'register'])
+        ->name('search.register');
+    
+    // Obtém palavras mais pesquisadas (trending)
+    Route::get('/trending', [SearchSuggestionsController::class, 'trending'])
+        ->name('search.trending');
+    
+    // Estatísticas das buscas
+    Route::get('/stats', [SearchSuggestionsController::class, 'stats'])
+        ->name('search.stats');
+});
+
+/*
+|--------------------------------------------------------------------------
+| REDIS MONITORING (INTERNO)
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('redis')->group(function () {
+    // Métricas atuais do Redis
+    Route::get('/metrics', [RedisMonitorController::class, 'metrics'])
+        ->name('redis.metrics');
+    
+    // Histórico de métricas
+    Route::get('/history', [RedisMonitorController::class, 'history'])
+        ->name('redis.history');
 });

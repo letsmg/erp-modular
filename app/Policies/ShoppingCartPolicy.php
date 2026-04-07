@@ -13,8 +13,8 @@ class ShoppingCartPolicy
      */
     public function viewAny(User $user): Response
     {
-        // Usuário só pode ver seu próprio carrinho
-        return Response::allow();
+        // Usuário precisa estar autenticado
+        return $user ? Response::allow() : Response::deny('Usuário não autenticado.');
     }
 
     /**

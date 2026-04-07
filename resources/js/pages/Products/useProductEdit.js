@@ -50,7 +50,11 @@ export function useProductEdit(props) {
         meta_title: props.product.seo?.meta_title || '',
         meta_description: props.product.seo?.meta_description || '',
         meta_keywords: props.product.seo?.meta_keywords 
-            ? props.product.seo.meta_keywords.split(',').map(s => s.trim()).filter(s => s !== "") 
+            ? (typeof props.product.seo.meta_keywords === 'string' 
+                ? props.product.seo.meta_keywords.split(',').map(s => s.trim()).filter(s => s !== "")
+                : Array.isArray(props.product.seo.meta_keywords) 
+                    ? props.product.seo.meta_keywords
+                    : []) 
             : [],
 
         // Conteúdo On-Page

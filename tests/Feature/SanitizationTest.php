@@ -11,7 +11,7 @@ class SanitizationTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
     public function it_sanitizes_supplier_data()
     {
         $user = User::factory()->create();
@@ -45,7 +45,7 @@ class SanitizationTest extends TestCase
         $this->assertEquals('João Silva', $supplier->contact_name_1);
     }
 
-    /** @test */
+    #[Test]
     public function it_sanitizes_user_data()
     {
         $admin = User::factory()->create(['access_level' => 1]);
@@ -92,7 +92,7 @@ class SanitizationTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function it_removes_xss_payloads()
     {
         $user = User::factory()->create();

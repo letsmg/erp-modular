@@ -18,10 +18,12 @@ class UserService
 
     public function list($currentUser)
     {
-        if ($currentUser->access_level !== 1) {
-            return $this->repository->getNonAdmin();
+        if ($currentUser->access_level->value !== 1) {
+            // Para usuários não-admin (clientes e padrão), mostra todos os usuários não-admin + ele mesmo
+            return $this->repository->getNonAdminWithSelf($currentUser->id);
         }
 
+        // Para admin, mostra todos os usuários (admins + padrão + clientes)
         return $this->repository->getAllOrdered();
     }
 

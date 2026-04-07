@@ -31,11 +31,17 @@ class ProductController extends Controller
     {
         $this->authorize('viewAny', Product::class);
 
-        $filters = $request->all(['search','blocked','active']);
+        $filters = $request->all([
+            'search', 'blocked', 'active', 'sort',
+            'brand', 'model', 'category_id',
+            'price_min', 'price_max', 'stock_min', 'stock_max'
+        ]);
         
         return Inertia::render('Products/Index', [
             'products' => $this->repository->getFiltered($filters),
-            'filters' => $filters, 
+            'filters' => $filters,
+            'brands' => $this->repository->getAllBrands(),
+            'categories' => $this->repository->getAllCategories(),
         ]);
     }
 
@@ -97,14 +103,19 @@ class ProductController extends Controller
     }
 
     /**
-     * Alterna o status de destaque (is_featured). ⭐
+     * Alterna o status de destaque (is_featured). 
      */
     public function toggleFeatured(Product $product)
     {
         $this->authorize('toggle', $product);
         
-        $this->repository->toggleFeatured($product);
-        return back()->with('message', 'Status de destaque atualizado!');
+        $updatedProduct = $this->repository->toggleFeatured($product);
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Status de destaque atualizado!',
+            'product' => $updatedProduct
+        ]);
     }
 
     /**

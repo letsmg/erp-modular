@@ -103,8 +103,9 @@ const handleDelete = (user) => {
                                             <span>Reset</span>
                                         </button>
 
-                                        <button v-if="auth.user.id == 0" @click="handleDelete(user)" class="text-gray-300 hover:text-red-600 flex items-center cursor-pointer transition group" title="Excluir Usuário">
+                                        <button v-if="auth.user.access_level === 1" @click="handleDelete(user)" class="text-gray-400 hover:text-red-600 flex items-center cursor-pointer transition group" title="Excluir Usuário">
                                             <Trash2 class="w-4 h-4 group-hover:scale-110 transition" />
+                                            <span>Excluir</span>
                                         </button>
                                     </template>
                                     

@@ -1,11 +1,13 @@
 <script setup>
 import StoreLayout from '@/Layouts/StoreLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
-import { useStoreIndex } from './useStoreIndex';
+import { onMounted, ref, watch } from 'vue';
+import { debounce } from 'lodash';
 import { 
     ShoppingBag, ChevronLeft, 
-    ChevronRight, ShieldCheck, SearchX 
+    ChevronRight, ShieldCheck, SearchX, ArrowUpDown, ChevronDown, Package, Loader2
 } from 'lucide-vue-next';
+import SearchSuggestions from '@/components/SearchSuggestions.vue';
 
 const props = defineProps({
     products: Object,
@@ -15,21 +17,304 @@ const props = defineProps({
     filters: Object
 });
 
-const { 
-    search, minPrice, maxPrice, brand,
-    showTermsModal, termsAccepted, acceptTerms,
-    scroll, seoData 
-} = useStoreIndex(props);
+// Estado para Load More
+const allProducts = ref([...props.products.data]);
+const currentPage = ref(props.products.current_page);
+const lastPage = ref(props.products.last_page);
+const isLoading = ref(false);
+const hasMoreProducts = ref(props.products.next_page_url !== null);
+
+// Estado local para filtros (controlado totalmente local)
+const localSearch = ref(props.filters?.search || '');
+const localMaxPrice = ref(props.filters?.max_price || '');
+const localBrand = ref(props.filters?.brand || '');
+const localSortBy = ref(props.filters?.sort || 'created_at_desc');
+
+// Estados do modal de termos (simulando useStoreIndex)
+const showTermsModal = ref(false);
+const termsAccepted = ref(false);
+
+// Funções do modal
+const acceptTerms = () => {
+    if (!termsAccepted.value) return;
+    
+    localStorage.setItem('erp_terms_accepted', 'true');
+    showTermsModal.value = false;
+    
+    // Faz POST para aceitar termos
+    fetch('/terms/accept', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        }
+    });
+};
+
+// Funções para SearchSuggestions
+const handleSearch = (term) => {
+    localSearch.value = term;
+    reloadProducts();
+};
+
+const handleSuggestionSelected = (suggestion) => {
+    console.log('Sugestão selecionada:', suggestion);
+    handleSearch(suggestion.term);
+};
+
+// Função scroll para carrossel
+const scroll = (id, direction) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+
+    const isAtEnd = el.scrollLeft + el.offsetWidth >= el.scrollWidth - 10;
+
+    if (direction === 'right' && isAtEnd) {
+        el.scrollTo({ left: 0, behavior: 'smooth' });
+    } else {
+        const offset = direction === 'left' ? -el.offsetWidth : el.offsetWidth;
+        el.scrollBy({ left: offset, behavior: 'smooth' });
+    }
+};
+
+// SEO data
+const seoData = ref({
+    title: "Vitrine Premium | ERP Zenite",
+    description: "Explore nossa seleção exclusiva de produtos.",
+    h1: "Catálogo de Produtos"
+});
+
+// Função para obter URL da imagem
+const getImageUrl = (path) => {
+    if (!path) return 'https://placehold.co/600x800';
+    return path.startsWith('http') ? path : `/storage/products/${path}`;
+};
+
+// Opções de ordenação
+const sortOptions = [
+    { value: 'created_at_desc', label: 'Mais recentes' },
+    { value: 'best_selling', label: 'Mais vendidos' },
+    { value: 'sale_price_asc', label: 'Menor preço' },
+    { value: 'sale_price_desc', label: 'Maior preço' },
+    { value: 'promo_price_asc', label: 'Melhores promoções' },
+    { value: 'description_asc', label: 'Nome (A-Z)' },
+    { value: 'description_desc', label: 'Nome (Z-A)' },
+    { value: 'created_at_asc', label: 'Mais antigos' },
+];
+
+// Lazy Loading Setup
+onMounted(() => {
+    // Verifica se o browser suporta lazy loading nativo
+    if ('loading' in HTMLImageElement.prototype) {
+        console.log('Native lazy loading supported');
+    } else {
+        // Fallback para browsers antigos
+        setupLazyLoadingFallback();
+    }
+});
+
+// Sincroniza filtros locais com useStoreIndex (sem sobrescrever com função)
+// REMOVIDO para evitar que Inertia cause refresh
+// watch(() => props.filters?.search, (newValue) => {
+//     if (newValue && typeof newValue === 'string') {
+//         localSearch.value = newValue;
+//         reloadProducts(); // Recarrega sem rolar
+//     }
+// });
+
+// watch(() => props.filters?.max_price, (newValue) => {
+//     if (newValue && typeof newValue === 'string') {
+//         localMaxPrice.value = newValue;
+//         reloadProducts(); // Recarrega sem rolar
+//     }
+// });
+
+// watch(() => props.filters?.brand, (newValue) => {
+//     if (newValue && typeof newValue === 'string') {
+//         localBrand.value = newValue;
+//         reloadProducts(); // Recarrega sem rolar
+//     }
+// });
+
+// watch(() => props.filters?.sort, (newValue) => {
+//     if (newValue && typeof newValue === 'string') {
+//         localSortBy.value = newValue;
+//         reloadProducts(); // Recarrega sem rolar
+//     }
+// });
+
+// Apenas watchers locais para controlar tudo
+watch(localSearch, () => reloadProducts());
+watch(localMaxPrice, () => reloadProducts());
+watch(localBrand, () => reloadProducts());
+watch(localSortBy, () => reloadProducts());
+
+const setupLazyLoadingFallback = () => {
+    const lazyImages = document.querySelectorAll('img[loading="lazy"]');
+    
+    if ('IntersectionObserver' in window) {
+        const imageObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    img.src = img.dataset.src || img.src;
+                    img.classList.remove('lazyload');
+                    imageObserver.unobserve(img);
+                }
+            });
+        });
+        
+        lazyImages.forEach(img => {
+            imageObserver.observe(img);
+        });
+    } else {
+        // Fallback para browsers muito antigos
+        lazyImages.forEach(img => {
+            img.src = img.dataset.src || img.src;
+        });
+    }
+};
+
+// Função Load More
+const loadMoreProducts = async () => {
+    if (isLoading.value || !hasMoreProducts.value) return;
+    
+    isLoading.value = true;
+    
+    try {
+        const nextPage = currentPage.value + 1;
+        
+        // Debug dos valores
+        console.log('DEBUG COMPLETO:', {
+            'localSortBy.value': localSortBy.value,
+            'typeof localSortBy.value': typeof localSortBy.value,
+            'props.filters.sort': props.filters?.sort,
+            'props.filters': props.filters,
+            'localSortBy': localSortBy
+        });
+        
+        // Constrói URL com filtros atuais
+        const params = new URLSearchParams();
+        if (localSearch.value) params.append('search', localSearch.value);
+        if (localMaxPrice.value) params.append('max_price', localMaxPrice.value);
+        if (localBrand.value) params.append('brand', localBrand.value);
+        if (localSortBy.value && typeof localSortBy.value === 'string') {
+            params.append('sort', localSortBy.value);
+        }
+        params.append('page', nextPage);
+        
+        const url = `/store/products?${params.toString()}`;
+        console.log('URL sendo solicitada:', url);
+        
+        // Adicionando timestamp para evitar cache
+        const timestampedUrl = `${url}&_t=${Date.now()}`;
+        
+        const response = await fetch(timestampedUrl, {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+            }
+        });
+        
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log('Dados recebidos:', data);
+            
+            // Adiciona novos produtos à lista existente
+            allProducts.value = [...allProducts.value, ...data.data];
+            currentPage.value = data.current_page;
+            hasMoreProducts.value = data.next_page_url !== null;
+        } else {
+            console.error('Erro na resposta:', response.status, response.statusText);
+            console.error('Response text:', await response.text());
+        }
+    } catch (error) {
+        console.error('Erro ao carregar mais produtos:', error);
+    } finally {
+        isLoading.value = false;
+    }
+};
+
+// Função para determinar tempo de debounce baseado no tamanho da busca
+const getDebounceTime = () => {
+    const searchLength = localSearch.value.length;
+    
+    if (searchLength === 0) return 500; // Busca vazia
+    if (searchLength <= 3) return 200; // Busca curta (Redis) - mais rápido
+    return 500; // Busca longa (PostgreSQL) - mais lento
+};
+
+// Função para recarregar produtos com filtros (sem rolar)
+const reloadProducts = debounce(async () => {
+    isLoading.value = true;
+    
+    try {
+        // Constrói URL com filtros atuais
+        const params = new URLSearchParams();
+        if (localSearch.value) params.append('search', localSearch.value);
+        if (localMaxPrice.value) params.append('max_price', localMaxPrice.value);
+        if (localBrand.value) params.append('brand', localBrand.value);
+        if (localSortBy.value && typeof localSortBy.value === 'string') {
+            params.append('sort', localSortBy.value);
+        }
+        params.append('page', 1); // Sempre página 1
+        
+        const url = `/store/products?${params.toString()}`;
+        console.log('Recarregando produtos:', url);
+        
+        // Adicionando timestamp para evitar cache
+        const timestampedUrl = `${url}&_t=${Date.now()}`;
+        
+        const response = await fetch(timestampedUrl, {
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'Cache-Control': 'no-cache',
+                'Pragma': 'no-cache'
+            }
+        });
+        
+        if (response.ok) {
+            const data = await response.json();
+            console.log('Produtos recarregados:', data);
+            
+            // Substitui todos os produtos
+            allProducts.value = [...data.data];
+            currentPage.value = data.current_page;
+            hasMoreProducts.value = data.next_page_url !== null;
+        } else {
+            console.error('Erro ao recarregar produtos:', response.status, response.statusText);
+        }
+    } catch (error) {
+        console.error('Erro ao recarregar produtos:', error);
+    } finally {
+        isLoading.value = false;
+    }
+}, getDebounceTime()); // Debounce dinâmico
 </script>
 
 <template>
-    <StoreLayout v-model:searchTerm="search">
+    <StoreLayout v-model:searchTerm="localSearch">
         <Head>
             <title>{{ seoData.title }}</title>
             <meta name="description" :content="seoData.description" />
         </Head>
 
         <header class="max-w-7xl mx-auto px-4 md:px-6 pt-10">
+            <!-- Componente de Sugestões Inteligentes -->
+            <div class="mb-8">
+                <SearchSuggestions
+                    :initial-search="localSearch"
+                    @search="handleSearch"
+                    @suggestion-selected="handleSuggestionSelected"
+                />
+            </div>
+            
             <h1 class="text-4xl md:text-6xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">
                 {{ seoData.h1 }}
             </h1>
@@ -42,11 +327,13 @@ const {
             <div class="relative group">
                 <div id="hero-carousel" class="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide gap-4 rounded-[2.5rem] md:rounded-[4rem] shadow-2xl">
                     <div v-for="p in featuredProducts" :key="p.slug" 
-                         class="min-w-full snap-center relative aspect-[16/9] md:aspect-[21/9] bg-slate-900 overflow-hidden">
+                         class="min-w-full snap-center relative aspect-[16/9] md:aspect-[21/9] bg-blue-900 overflow-hidden">
                         <img :src="p.images?.[0] ? '/storage/products/' + p.images[0].path : 'https://placehold.co/1200x500'" 
-                             class="w-full h-full object-cover opacity-40 transition-transform duration-1000 group-hover:scale-110" />
+                             class="w-full h-full object-cover opacity-40 transition-transform duration-1000 group-hover:scale-110 lazyload"
+                             loading="lazy"
+                             :alt="p.description" />
                         
-                        <div class="absolute inset-0 flex flex-col justify-center px-10 md:px-20 text-white bg-gradient-to-r from-slate-900 via-slate-900/20 to-transparent">
+                        <div class="absolute inset-0 flex flex-col justify-center px-10 md:px-20 text-white bg-gradient-to-r from-blue-900 via-blue-900/20 to-transparent">
                             <span class="bg-primary w-fit px-4 py-1.5 rounded-full text-[10px] font-black uppercase mb-6 tracking-[0.2em]">Destaque da Semana</span>
                             <h2 class="text-3xl md:text-6xl font-black mb-4 tracking-tighter leading-tight max-w-3xl uppercase italic">{{ p.description }}</h2>
                             <p class="text-2xl md:text-3xl text-primary-hover mb-8 font-mono font-bold">R$ {{ p.sale_price }}</p>
@@ -70,20 +357,35 @@ const {
         <main class="max-w-7xl mx-auto px-4 md:px-6 py-16 flex flex-col md:flex-row gap-12">
             
             <aside class="w-full md:w-72">
-                <div class="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm md:sticky md:top-32 space-y-10">
+                <div class="bg-white p-8 rounded-[3rem] border border-blue-100 shadow-sm md:sticky md:top-32 space-y-10">
                     <div class="space-y-6">
                         <div class="group">
-                            <label class="text-[10px] font-black uppercase text-slate-900 mb-2 block ml-1 tracking-wider">Preço Limite</label>
-                            <input v-model="maxPrice" type="number" placeholder="Até R$" 
-                                class="w-full bg-slate-50 border-none rounded-2xl text-xs font-bold p-4 focus:ring-2 focus:ring-indigo-500 transition-all" />
+                            <label class="text-[10px] font-black uppercase text-blue-900 mb-2 block ml-1 tracking-wider">Preço Limite</label>
+                            <input v-model="localMaxPrice" type="number" placeholder="Até R$" 
+                                class="w-full bg-blue-50 border-none rounded-2xl text-xs font-bold p-4 focus:ring-2 focus:ring-blue-500 transition-all" />
                         </div>
                         
                         <div>
-                            <label class="text-[10px] font-black uppercase text-slate-900 mb-2 block ml-1 tracking-wider">Marca</label>
-                            <select v-model="brand" class="w-full bg-slate-50 border-none rounded-2xl text-xs font-bold p-4 focus:ring-2 focus:ring-indigo-500 transition-all">
+                            <label class="text-[10px] font-black uppercase text-blue-900 mb-2 block ml-1 tracking-wider">Marca</label>
+                            <select v-model="localBrand" class="w-full bg-blue-50 border-none rounded-2xl text-xs font-bold p-4 focus:ring-2 focus:ring-blue-500 transition-all">
                                 <option value="">Todas as Marcas</option>
                                 <option v-for="b in brands" :key="b" :value="b">{{ b }}</option>
                             </select>
+                        </div>
+                        
+                        <div>
+                            <label class="text-[10px] font-black uppercase text-blue-900 mb-2 block ml-1 tracking-wider">Ordenar por</label>
+                            <div class="relative">
+                                <ArrowUpDown class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400" />
+                                <select 
+                                    v-model="localSortBy"
+                                    class="w-full bg-blue-50 border-none rounded-2xl text-xs font-bold p-4 pl-10 focus:ring-2 focus:ring-blue-500 transition-all appearance-none cursor-pointer"
+                                >
+                                    <option v-for="option in sortOptions" :key="option.value" :value="option.value">
+                                        {{ option.label }}
+                                    </option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -91,36 +393,36 @@ const {
 
             <section class="flex-1">
                 
-                <nav v-if="products.links?.length > 3" 
-                     class="sticky top-[80px] z-30 py-4 bg-slate-50/90 backdrop-blur-xl mb-10 flex justify-center flex-wrap gap-2 border-b border-slate-100/50 rounded-b-3xl">
-                    <template v-for="(link, k) in products.links" :key="k">
-                        <Link
-                            :href="link.url || '#'"
-                            class="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase transition-all border shadow-sm"
-                            :class="link.active 
-                                ? 'bg-slate-900 text-white border-slate-900 scale-105 shadow-lg shadow-slate-200' 
-                                : 'bg-white text-slate-400 border-slate-100 hover:bg-slate-50 hover:text-slate-900'"
-                        >
-                            {{ link.label }}
-                        </Link>
-                    </template>
-                </nav>
+                <!-- Estatísticas da Paginação -->
+                <div v-if="products.total > 12" class="mb-6 text-center">
+                    <p class="text-sm text-slate-500 font-medium">
+                        Mostrando 
+                        <span class="font-black text-slate-900">{{ products.from || 0 }}</span> 
+                        a 
+                        <span class="font-black text-slate-900">{{ products.to || 0 }}</span> 
+                        de 
+                        <span class="font-black text-slate-900">{{ products.total }}</span> 
+                        produtos
+                    </p>
+                </div>
 
-                <div v-if="products.data?.length" class="grid grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10">
+                <div v-if="allProducts?.length" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 lg:gap-8">
     
                     <Link 
-                        v-for="product in products.data" 
-                        :key="product.slug"
+                        v-for="product in allProducts" 
+                        :key="product.slug + '-' + product.id"
                         :href="route('store.product', product.slug)"
                         class="group bg-white p-5 rounded-[2.5rem] md:rounded-[3.5rem] border border-white shadow-sm hover:shadow-2xl transition-all duration-700 block"
                     >
                         
-                        <div class="relative aspect-[4/5] rounded-[2rem] md:rounded-[2.8rem] overflow-hidden bg-slate-100 mb-6">
+                        <div class="relative aspect-[4/5] rounded-[2rem] md:rounded-[2.8rem] overflow-hidden bg-blue-100 mb-6">
                             <img 
                                 :src="product.images?.[0] 
                                     ? '/storage/products/' + product.images[0].path 
                                     : 'https://placehold.co/600x800'" 
-                                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
+                                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000 lazyload"
+                                loading="lazy"
+                                :alt="product.description"
                             />
 
                             <div class="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center">
@@ -150,15 +452,35 @@ const {
 
                 </div>
 
-                <div v-else class="text-center py-32 bg-white rounded-[4rem] border-4 border-dashed border-slate-50">
-                    <SearchX class="w-16 h-16 text-slate-200 mx-auto mb-6" />
-                    <p class="text-slate-400 font-black uppercase tracking-[0.3em] text-sm italic">Nenhum resultado para os filtros aplicados</p>
+                <!-- Botão Carregar Mais -->
+                <div v-if="hasMoreProducts" class="text-center mt-12 mb-8">
+                    <button 
+                        @click="loadMoreProducts"
+                        :disabled="isLoading"
+                        class="inline-flex items-center gap-3 bg-gradient-to-r from-red-600 to-red-700 text-white px-8 py-4 rounded-2xl font-black text-sm uppercase tracking-wider hover:from-red-700 hover:to-red-800 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                    >
+                        <Loader2 v-if="isLoading" class="w-5 h-5 animate-spin" />
+                        <Package v-else class="w-5 h-5" />
+                        {{ isLoading ? 'Carregando...' : 'Carregar Mais Produtos' }}
+                        <ChevronDown class="w-5 h-5" />
+                    </button>
+                </div>
+
+                <div v-else-if="allProducts?.length" class="text-center mt-12 mb-8">
+                    <p class="text-slate-400 text-sm font-medium uppercase tracking-wider">
+                        Você chegou ao fim! Mostrando todos os {{ allProducts.length }} de {{ products.total }} produtos
+                    </p>
+                </div>
+
+                <div v-else class="text-center py-32 bg-white rounded-[4rem] border-4 border-dashed border-blue-50">
+                    <SearchX class="w-16 h-16 text-blue-200 mx-auto mb-6" />
+                    <p class="text-blue-400 font-black uppercase tracking-[0.3em] text-sm italic">Nenhum resultado para os filtros aplicados</p>
                 </div>
             </section>
         </main>
 
         <Transition enter-active-class="duration-700 ease-out" enter-from-class="opacity-0 translate-y-10" enter-to-class="opacity-100 translate-y-0">
-            <div v-if="showTermsModal" class="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-slate-900/95 backdrop-blur-2xl">
+            <div v-if="showTermsModal" class="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-blue-900/95 backdrop-blur-2xl">
                 <div class="bg-white w-full max-w-xl rounded-[4rem] p-12 shadow-2xl relative overflow-hidden">
                     <div class="absolute top-0 left-0 w-full h-2 bg-primary"></div>
                     
@@ -172,14 +494,14 @@ const {
                         Ao prosseguir, você concorda com nossos <a href="#" class="text-primary font-black underline decoration-2 underline-offset-4">termos de uso</a> e política de privacidade.
                     </p>
 
-                    <label class="flex items-center gap-4 cursor-pointer mb-10 bg-slate-50 p-6 rounded-3xl border border-slate-100 hover:bg-primary/5 transition-colors group">
-                        <input type="checkbox" v-model="termsAccepted" class="h-6 w-6 rounded-lg border-slate-300 text-primary focus:ring-primary transition-all" />
-                        <span class="text-[11px] font-black text-slate-700 uppercase tracking-tight group-hover:text-primary">Compreendo e aceito as condições de monitoramento.</span>
+                    <label class="flex items-center gap-4 cursor-pointer mb-10 bg-blue-50 p-6 rounded-3xl border border-blue-100 hover:bg-primary/5 transition-colors group">
+                        <input type="checkbox" v-model="termsAccepted" class="h-6 w-6 rounded-lg border-blue-300 text-primary focus:ring-primary transition-all" />
+                        <span class="text-[11px] font-black text-blue-700 uppercase tracking-tight group-hover:text-primary">Compreendo e aceito as condições de monitoramento.</span>
                     </label>
 
                     <button @click="acceptTerms" :disabled="!termsAccepted"
                         class="w-full py-6 rounded-2xl font-black uppercase tracking-[0.2em] text-xs transition-all shadow-xl"
-                        :class="termsAccepted ? 'bg-slate-900 text-white hover:bg-primary hover:-translate-y-1' : 'bg-slate-100 text-slate-300 cursor-not-allowed'">
+                        :class="termsAccepted ? 'bg-blue-900 text-white hover:bg-primary hover:-translate-y-1' : 'bg-blue-100 text-blue-300 cursor-not-allowed'">
                         Confirmar Acesso
                     </button>
                 </div>

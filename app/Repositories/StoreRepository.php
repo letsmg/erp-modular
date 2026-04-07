@@ -3,51 +3,58 @@
 namespace App\Repositories;
 
 use App\Models\Product;
+use App\Services\SmartSearchService;
+use Illuminate\Http\Request;
 
 class StoreRepository
 {
-    /**
-     * 🔍 Produtos com filtros
-     */
-    public function getFilteredProducts(array $filters)
+    protected SmartSearchService $smartSearchService;
+
+    public function __construct(SmartSearchService $smartSearchService)
     {
-        $query = Product::query()
-            ->with(['images', 'seo'])
-            ->where('is_active', true);
-
-        // 🔎 Busca por texto (PostgreSQL com unaccent)
-        if (!empty($filters['search']) && mb_strlen($filters['search']) >= 3) {
-            $searchTerm = '%' . $filters['search'] . '%';
-
-            $query->where(function ($q) use ($searchTerm) {
-                $q->whereRaw("unaccent(description) ILIKE unaccent(?)", [$searchTerm])
-                  ->orWhereRaw("unaccent(brand) ILIKE unaccent(?)", [$searchTerm]);
-            });
-        }
-
-        // 💰 Preço mínimo
-        if (!empty($filters['min_price']) && is_numeric($filters['min_price'])) {
-            $query->where('sale_price', '>=', (float) $filters['min_price']);
-        }
-
-        // 💰 Preço máximo
-        if (!empty($filters['max_price']) && is_numeric($filters['max_price'])) {
-            $query->where('sale_price', '<=', (float) $filters['max_price']);
-        }
-
-        // 🏷️ Marca
-        if (!empty($filters['brand'])) {
-            $query->where('brand', $filters['brand']);
-        }
-
-        return $query
-            ->orderByDesc('created_at')
-            ->paginate(9)
-            ->withQueryString(); // 🔥 mantém filtros na paginação
+        $this->smartSearchService = $smartSearchService;
     }
 
     /**
-     * ⭐ Produtos em destaque
+     * 🔍 Produtos com filtros (usando busca inteligente)
+     */
+    public function getFilteredProducts(array $filters)
+    {
+        $searchTerm = $filters['search'] ?? '';
+        $otherFilters = collect($filters)->except(['search'])->toArray();
+
+        // Usa busca inteligente (Redis/PostgreSQL)
+        $products = $this->smartSearchService->search($searchTerm, $otherFilters);
+
+        // Aplica paginação manualmente
+        $page = $filters['page'] ?? 1;
+        $perPage = 12;
+        
+        $total = $products->count();
+        $offset = ($page - 1) * $perPage;
+        
+        $paginatedProducts = $products->slice($offset, $perPage)->values();
+        
+        // Cria objeto de paginação compatível com Laravel
+        $pagination = new \Illuminate\Pagination\LengthAwarePaginator(
+            $paginatedProducts,
+            $total,
+            $perPage,
+            $page,
+            [
+                'path' => request()->url(),
+                'pageName' => 'page',
+            ]
+        );
+
+        // Adiciona withQueryString para manter filtros
+        $pagination->withQueryString();
+
+        return $pagination;
+    }
+
+    /**
+     * Produtos em destaque
      */
     public function getFeaturedProducts(int $limit = 5)
     {
@@ -82,5 +89,14 @@ class StoreRepository
             ->distinct()
             ->orderBy('brand')
             ->pluck('brand');
+    }
+
+    /**
+     * Limpa strings para busca numérica (preços).
+     */
+    private function parseNumeric($value) 
+    {
+        $cleaned = preg_replace('/[^0-9,.]/', '', str_replace(',', '.', $value));
+        return is_numeric($cleaned) ? (float) $cleaned : 0;
     }
 }

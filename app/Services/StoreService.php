@@ -31,6 +31,14 @@ class StoreService
     }
 
     /**
+     * Retorna produtos filtrados (para Load More)
+     */
+    public function getFilteredProducts(array $filters)
+    {
+        return $this->repository->getFilteredProducts($filters);
+    }
+
+    /**
      * 🔐 Registra aceite de termos
      */
     public function recordTermAcceptance(Request $request): TermAcceptance

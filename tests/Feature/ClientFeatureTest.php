@@ -6,12 +6,13 @@ use App\Models\Client;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 class ClientFeatureTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
     public function admin_can_view_clients()
     {
         $admin = User::factory()->admin()->create();
@@ -34,7 +35,7 @@ class ClientFeatureTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[Test]
     public function operator_can_view_clients()
     {
         $operator = User::factory()->create(['access_level' => 0]); // OPERATOR
@@ -45,7 +46,7 @@ class ClientFeatureTest extends TestCase
         $response->assertStatus(200);
     }
 
-    /** @test */
+    #[Test]
     public function client_cannot_view_clients()
     {
         $client = User::factory()->client()->create();
@@ -56,7 +57,7 @@ class ClientFeatureTest extends TestCase
         $response->assertStatus(403);
     }
 
-    /** @test */
+    #[Test]
     public function guest_cannot_view_clients()
     {
         Client::factory()->count(3)->create();
@@ -66,7 +67,7 @@ class ClientFeatureTest extends TestCase
         $response->assertStatus(401);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_create_client_with_user()
     {
         $admin = User::factory()->admin()->create();
@@ -113,7 +114,7 @@ class ClientFeatureTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_create_client_without_user()
     {
         $admin = User::factory()->admin()->create();
@@ -135,7 +136,7 @@ class ClientFeatureTest extends TestCase
         ]);
     }
 
-    /** @test */
+    #[Test]
     public function client_cannot_create_client()
     {
         $client = User::factory()->client()->create();
@@ -151,7 +152,7 @@ class ClientFeatureTest extends TestCase
         $response->assertStatus(403);
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_unique_document()
     {
         $admin = User::factory()->admin()->create();
@@ -174,7 +175,7 @@ class ClientFeatureTest extends TestCase
             ->assertJsonValidationErrors(['document_number']);
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_cpf_format()
     {
         $admin = User::factory()->admin()->create();
@@ -191,7 +192,7 @@ class ClientFeatureTest extends TestCase
             ->assertJsonValidationErrors(['document_number']);
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_cnpj_format()
     {
         $admin = User::factory()->admin()->create();
@@ -208,7 +209,7 @@ class ClientFeatureTest extends TestCase
             ->assertJsonValidationErrors(['document_number']);
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_required_state_registration_for_cnpj()
     {
         $admin = User::factory()->admin()->create();
@@ -226,13 +227,13 @@ class ClientFeatureTest extends TestCase
             ->assertJsonValidationErrors(['state_registration']);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_view_client()
     {
         $admin = User::factory()->admin()->create();
         $client = Client::factory()->create();
 
-        $response = $this->actingAs($admin)->get("/api/clients/{$client->id}");
+        $response = $this->actingAs($admin)->get("/clients/{$client->id}");
 
         $response->assertStatus(200)
             ->assertJsonStructure([
@@ -255,29 +256,29 @@ class ClientFeatureTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[Test]
     public function client_can_view_own_client()
     {
         $user = User::factory()->client()->create();
         $client = Client::factory()->create(['user_id' => $user->id]);
 
-        $response = $this->actingAs($user)->get("/api/clients/{$client->id}");
+        $response = $this->actingAs($user)->get("/clients/{$client->id}");
 
         $response->assertStatus(200);
     }
 
-    /** @test */
+    #[Test]
     public function client_cannot_view_other_client()
     {
         $user = User::factory()->client()->create();
         $otherClient = Client::factory()->create();
 
-        $response = $this->actingAs($user)->get("/api/clients/{$otherClient->id}");
+        $response = $this->actingAs($user)->get("/clients/{$otherClient->id}");
 
         $response->assertStatus(403);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_update_client()
     {
         $admin = User::factory()->admin()->create();
@@ -288,7 +289,7 @@ class ClientFeatureTest extends TestCase
             'phone1' => '(11) 99999-8888',
         ];
 
-        $response = $this->actingAs($admin)->put("/api/clients/{$client->id}", $data);
+        $response = $this->actingAs($admin)->put("/clients/{$client->id}", $data);
 
         $response->assertStatus(200);
         
@@ -297,13 +298,13 @@ class ClientFeatureTest extends TestCase
         $this->assertEquals('(11) 99999-8888', $client->phone1);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_toggle_client_status()
     {
         $admin = User::factory()->admin()->create();
         $client = Client::factory()->create(['is_active' => true]);
 
-        $response = $this->actingAs($admin)->post("/api/clients/{$client->id}/toggle-status");
+        $response = $this->actingAs($admin)->post("/clients/{$client->id}/toggle-status");
 
         $response->assertStatus(200);
         
@@ -311,31 +312,31 @@ class ClientFeatureTest extends TestCase
         $this->assertFalse($client->is_active);
     }
 
-    /** @test */
+    #[Test]
     public function admin_can_delete_client()
     {
         $admin = User::factory()->admin()->create();
         $client = Client::factory()->create();
 
-        $response = $this->actingAs($admin)->delete("/api/clients/{$client->id}");
+        $response = $this->actingAs($admin)->delete("/clients/{$client->id}");
 
         $response->assertStatus(200);
         $this->assertDatabaseMissing('clients', ['id' => $client->id]);
     }
 
-    /** @test */
+    #[Test]
     public function operator_cannot_delete_client()
     {
         $operator = User::factory()->create(['access_level' => 0]); // OPERATOR
         $client = Client::factory()->create();
 
-        $response = $this->actingAs($operator)->delete("/api/clients/{$client->id}");
+        $response = $this->actingAs($operator)->delete("/clients/{$client->id}");
 
         $response->assertStatus(403);
         $this->assertDatabaseHas('clients', ['id' => $client->id]);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_search_client_by_document()
     {
         $admin = User::factory()->admin()->create();
@@ -343,7 +344,7 @@ class ClientFeatureTest extends TestCase
             'document_number' => '12345678901234',
         ]);
 
-        $response = $this->actingAs($admin)->get('/api/clients/search?search=12345678901234');
+        $response = $this->actingAs($admin)->get('/clients/search?search=12345678901234');
 
         $response->assertStatus(200)
             ->assertJsonFragment([
@@ -355,14 +356,14 @@ class ClientFeatureTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_search_client_by_email()
     {
         $admin = User::factory()->admin()->create();
         $user = User::factory()->create(['email' => 'test@example.com']);
         $client = Client::factory()->create(['user_id' => $user->id]);
 
-        $response = $this->actingAs($admin)->get('/api/clients/search?search=test@example.com');
+        $response = $this->actingAs($admin)->get('/clients/search?search=test@example.com');
 
         $response->assertStatus(200)
             ->assertJsonFragment([
@@ -374,12 +375,12 @@ class ClientFeatureTest extends TestCase
             ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_validate_document()
     {
         $admin = User::factory()->admin()->create();
 
-        $response = $this->actingAs($admin)->post('/api/clients/validate-document', [
+        $response = $this->actingAs($admin)->post('/api/v1/clients/validate-document', [
             'document' => '12345678901234',
         ]);
 
@@ -388,18 +389,18 @@ class ClientFeatureTest extends TestCase
                 'success' => true,
                 'data' => [
                     'valid' => true,
-                    'type' => 'CNPJ',
+                    'document_type' => 'CNPJ',
                 ],
             ]);
     }
 
-    /** @test */
+    #[Test]
     public function it_rejects_invalid_document_validation()
     {
         $admin = User::factory()->admin()->create();
 
-        $response = $this->actingAs($admin)->post('/api/clients/validate-document', [
-            'document' => '11111111111111', // Invalid CPF
+        $response = $this->actingAs($admin)->post('/api/v1/clients/validate-document', [
+            'document' => '11111111111111', // Invalid CPF (11 dígitos iguais)
         ]);
 
         $response->assertStatus(400)

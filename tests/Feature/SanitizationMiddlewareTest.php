@@ -4,15 +4,15 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use App\Models\Product;
-use App\Models\Supplier;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 class SanitizationMiddlewareTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
     public function it_sanitizes_product_update_data()
     {
         $user = User::factory()->create(['access_level' => 1]);
@@ -38,7 +38,7 @@ class SanitizationMiddlewareTest extends TestCase
         $this->assertEquals('New Collection', $product->collection);
     }
 
-    /** @test */
+    #[Test]
     public function it_sanitizes_supplier_creation_data()
     {
         $user = User::factory()->create();
@@ -71,7 +71,7 @@ class SanitizationMiddlewareTest extends TestCase
         $this->assertEquals('João Silva', $supplier->contact_name_1);
     }
 
-    /** @test */
+    #[Test]
     public function it_preserves_get_requests()
     {
         $user = User::factory()->create();

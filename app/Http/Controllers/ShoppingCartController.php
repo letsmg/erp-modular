@@ -128,7 +128,7 @@ class ShoppingCartController extends Controller
         if ($result['success']) {
             return $this->success($result, 'Checkout preparado com sucesso.');
         } else {
-            return $this->error($result['message'], $result);
+            return $this->error($result['message'], 400, $result);
         }
     }
 

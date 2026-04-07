@@ -18,7 +18,7 @@ class StoreController extends Controller
 
     public function index(Request $request)
     {
-        $filters = $request->only(['search', 'min_price', 'max_price', 'brand']);
+        $filters = $request->only(['search', 'min_price', 'max_price', 'brand', 'sort']);
         $data = $this->service->getDataForIndex($filters);
 
         return Inertia::render('Store/Index', $data);
@@ -54,5 +54,16 @@ class StoreController extends Controller
         $this->service->recordTermAcceptance($request);
 
         return back()->with('success', 'Termos aceitos.');
+    }
+
+    /**
+     * Endpoint JSON para Load More
+     */
+    public function getProducts(Request $request)
+    {
+        $filters = $request->only(['search', 'min_price', 'max_price', 'brand', 'sort', 'page']);
+        $products = $this->service->getFilteredProducts($filters);
+
+        return response()->json($products);
     }
 }

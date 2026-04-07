@@ -1,68 +1,94 @@
-name: 🚀 Deploy
+name: 🚀 Deploy to Production
 
 on:
   push:
     branches: [main]
-   
-#quando usar em producao, aguardar testes primeiro
-
-#   workflow_run:
-#     workflows: ["🚀 CI tests"] # Deve ser o nome exato do outro arquivo
-#     types:
-#       - completed
-#     branches: [main]        
+  workflow_dispatch:
 
 jobs:
-  deploy:    
+  deploy:
     runs-on: ubuntu-latest
     
-    #trava de segurança para substituir o needs em arquivos separados:
-    # aqui em baixo está comentado sim mesmo parecendo que não está com #
-    # if: ${{ github.event.workflow_run.conclusion == 'success' }} #
-
     steps:
-      - name: 🔑 Configure SSH
-        uses: webfactory/ssh-agent@v0.8.0
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🐧 Setup PHP
+        uses: shivammathur/setup-php@v2
         with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          php-version: '8.2'
+          extensions: mbstring, xml, ctype, iconv, intl, pdo_pgsql, redis
+          tools: composer:v2
+          cache: composer
 
-      - name: 🚀 Executar deploy no servidor
+      - name: � Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: � Install Dependencies
         run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@147.15.80.52 << 'EOF'
-            set -e
-            
-            echo "🛡️ Configurando exceção de segurança do Git"
-            git config --global --add safe.directory /var/www/erp
+          composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
+          npm ci
 
-            cd /var/www/erp
+      - name: 🔨 Build Assets
+        run: |
+          npm run build
+
+      - name: � Deploy to Server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.ORACLE_IP }}
+          username: ${{ secrets.ORACLE_USER }}
+          key: ${{ secrets.ORACLE_SSH_KEY }}
+          port: ${{ secrets.ORACLE_PORT }}
+          script: |
+            cd /home/ubuntu/app
             
-            echo "📥 Atualizando código..."
-            sudo chown -R ubuntu:www-data /var/www/erp
-            git reset --hard
+            # Backup atual
+            sudo cp -r /home/ubuntu/app /home/ubuntu/backup_$(date +%Y%m%d_%H%M%S)
+            
+            # Pull novo código
             git pull origin main
-
-            echo "📦 Dependências e Build..."
-            composer install --no-dev --optimize-autoloader --no-interaction --prefer-dist --no-progress
-            rm -rf node_modules package-lock.json
-            npm install --legacy-peer-deps
+            
+            # Instala dependências
+            composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
+            
+            # Build assets (se necessário)
+            npm ci
             npm run build
-
-            echo "🧹 Otimização Laravel..."
-            php artisan optimize:clear            
             
-            #para refazer o storage link
-            rm -rf public/storage && php artisan storage:link            
-
-            echo "🗄️ Migrations..."
-            php artisan migrate:fresh --seed
-            #php artisan migrate --force
-
-            echo "🔐 Restaurando permissões de produção..."
-            sudo chown -R www-data:www-data /var/www/erp
-            sudo chmod -R 775 storage bootstrap/cache
-
-            echo "🔄 Reiniciando PHP..."
-            sudo systemctl restart php8.3-fpm
+            # Docker Compose com Redis
+            docker-compose down
+            docker-compose up -d --build
             
-            echo "✅ Deploy finalizado com sucesso!"
-          EOF
+            # Limpa cache Laravel
+            php artisan cache:clear
+            php artisan config:clear
+            php artisan route:clear
+            php artisan view:clear
+            
+            # Otimiza produção
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
+            
+            # Permissões
+            sudo chown -R www-data:www-data storage bootstrap/cache
+            
+            # Verifica containers
+            docker ps
+            docker logs redis_prod
+
+      - name: 🧪 Health Check
+        run: |
+          sleep 30
+          curl -f ${{ secrets.APP_URL }}/health || exit 1
+
+      - name: 📊 Deployment Summary
+        run: |
+          echo "🎉 Deploy completed successfully!"
+          echo "📦 Redis: $(curl -s http://localhost:6379 || echo 'Not accessible')"
+          echo "🌐 App: ${{ secrets.APP_URL }}"
+          echo "📅 Deployed at: $(date)"

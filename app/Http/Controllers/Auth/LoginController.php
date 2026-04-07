@@ -59,7 +59,7 @@ class LoginController extends Controller
     public function logout(Request $request): RedirectResponse
     {
         $this->service->logout($request);
-        return redirect('/login');
+        return redirect('/');
     }
 
     public function showForgotPassword()

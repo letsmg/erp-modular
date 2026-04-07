@@ -6,7 +6,6 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\ProductController;
-use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StoreController;
@@ -35,20 +34,26 @@ Route::prefix('v1')->group(function () {
     |--------------------------------------------------------------------------
     */
     
-    Route::apiResource('clients', ClientController::class);
+    Route::apiResource('clients', ClientController::class)->names([
+            'index' => 'api.clients.index',
+            'store' => 'api.clients.store',
+            'show' => 'api.clients.show',
+            'update' => 'api.clients.update',
+            'destroy' => 'api.clients.destroy'
+        ]);
     
     Route::prefix('clients')->group(function () {
         Route::post('/validate-document', [ClientController::class, 'validateDocument'])
-            ->name('clients.validate-document');
+            ->name('api.clients.validate-document');
             
         Route::get('/search', [ClientController::class, 'search'])
-            ->name('clients.search');
+            ->name('api.clients.search');
             
         Route::post('/{client}/toggle-status', [ClientController::class, 'toggleStatus'])
-            ->name('clients.toggle-status');
+            ->name('api.clients.toggle-status');
             
         Route::get('/export', [ClientController::class, 'export'])
-            ->name('clients.export');
+            ->name('api.clients.export');
     });
     
     /*
@@ -57,7 +62,7 @@ Route::prefix('v1')->group(function () {
     |--------------------------------------------------------------------------
     */
     
-    Route::middleware('auth:api')->prefix('shopping-cart')->group(function () {
+    Route::middleware('auth')->prefix('shopping-cart')->group(function () {
         Route::get('/', [ShoppingCartController::class, 'index'])
             ->name('shopping-cart.index');
             
@@ -77,7 +82,7 @@ Route::prefix('v1')->group(function () {
             ->name('shopping-cart.clear');
     });
     
-    Route::middleware('auth:api')->prefix('shopping-cart')->group(function () {
+    Route::middleware('auth')->prefix('shopping-cart')->group(function () {
         Route::put('/{cart_item}', [ShoppingCartController::class, 'update'])
             ->name('shopping-cart.update');
             
@@ -91,26 +96,26 @@ Route::prefix('v1')->group(function () {
     |--------------------------------------------------------------------------
     */
     
-    Route::apiResource('products', ProductController::class);
-    
-    Route::prefix('products')->group(function () {
-        Route::get('/{product}/preview', [ProductController::class, 'preview'])
-            ->name('products.preview');
-            
-        Route::patch('/{product}/toggle-featured', [ProductController::class, 'toggleFeatured'])
-            ->name('products.toggle-featured');
-            
-        Route::patch('/{product}/toggle', [ProductController::class, 'toggle'])
-            ->name('products.toggle');
+    Route::middleware(['auth', 'staff'])->group(function () {
+        Route::apiResource('products', ProductController::class)->names([
+            'index' => 'api.products.index',
+            'store' => 'api.products.store',
+            'show' => 'api.products.show',
+            'update' => 'api.products.update',
+            'destroy' => 'api.products.destroy'
+        ]);
+        
+        Route::prefix('products')->group(function () {
+            Route::get('/{product}/preview', [ProductController::class, 'preview'])
+                ->name('api.products.preview');
+                
+            Route::patch('/{product}/toggle-featured', [ProductController::class, 'toggleFeatured'])
+                ->name('api.products.toggle-featured');
+                
+            Route::patch('/{product}/toggle', [ProductController::class, 'toggle'])
+                ->name('api.products.toggle');
+        });
     });
-    
-    /*
-    |--------------------------------------------------------------------------
-    | CATEGORIES (API)
-    |--------------------------------------------------------------------------
-    */
-    
-    Route::apiResource('categories', CategoryController::class);
     
     /*
     |--------------------------------------------------------------------------
@@ -118,7 +123,15 @@ Route::prefix('v1')->group(function () {
     |--------------------------------------------------------------------------
     */
     
-    Route::apiResource('suppliers', SupplierController::class);
+    Route::middleware(['auth', 'staff'])->group(function () {
+        Route::apiResource('suppliers', SupplierController::class)->names([
+            'index' => 'api.suppliers.index',
+            'store' => 'api.suppliers.store',
+            'show' => 'api.suppliers.show',
+            'update' => 'api.suppliers.update',
+            'destroy' => 'api.suppliers.destroy'
+        ]);
+    });
     
     /*
     |--------------------------------------------------------------------------
@@ -126,7 +139,15 @@ Route::prefix('v1')->group(function () {
     |--------------------------------------------------------------------------
     */
     
-    Route::apiResource('users', UserController::class);
+    Route::middleware(['auth', 'staff'])->group(function () {
+        Route::apiResource('users', UserController::class)->names([
+            'index' => 'api.users.index',
+            'store' => 'api.users.store',
+            'show' => 'api.users.show',
+            'update' => 'api.users.update',
+            'destroy' => 'api.users.destroy'
+        ]);
+    });
     
     /*
     |--------------------------------------------------------------------------
@@ -134,7 +155,7 @@ Route::prefix('v1')->group(function () {
     |--------------------------------------------------------------------------
     */
     
-    Route::middleware('auth:api')->group(function () {
+    Route::middleware('auth')->group(function () {
         Route::get('/me', function () {
             return response()->json([
                 'success' => true,

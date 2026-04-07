@@ -10,6 +10,7 @@ export function useStoreIndex(props) {
     const minPrice = ref(props.filters?.min_price || '');
     const maxPrice = ref(props.filters?.max_price || '');
     const brand = ref(props.filters?.brand || '');
+    const sortBy = ref(props.filters?.sort || 'created_at_desc');
 
     // --- MODAL (APENAS TERMOS) ---
     const showTermsModal = ref(false);
@@ -31,21 +32,39 @@ export function useStoreIndex(props) {
         if (search.value) params.search = search.value;
         if (maxPrice.value) params.max_price = maxPrice.value;
         if (brand.value) params.brand = brand.value;
+        if (sortBy.value) params.sort = sortBy.value;
 
         router.get(route('store.index'), params, {
             preserveState: true,
-            preserveScroll: true,
-            replace: true
+            preserveScroll: false,
+            replace: true,
+            onSuccess: () => {
+                // Preload da próxima página se houver
+                preloadNextPage();
+            }
         });
+    };
+
+    // --- PRELOAD DA PRÓXIMA PÁGINA ---
+    const preloadNextPage = () => {
+        setTimeout(() => {
+            const nextPageLink = document.querySelector('[rel="next"]');
+            if (nextPageLink) {
+                const link = document.createElement('link');
+                link.rel = 'prefetch';
+                link.href = nextPageLink.href;
+                document.head.appendChild(link);
+            }
+        }, 2000); // Aguarda 2s para não impactar o carregamento atual
     };
 
     // --- WATCHERS ---
     watch(search, debounce((value) => {
-        const length = getNormalizedLength(value);
-        if (length >= 3 || length === 0) filterProducts();
+        // Removida a trava de 3 caracteres - busca agora funciona com qualquer termo
+        filterProducts();
     }, 500));
 
-    watch([maxPrice, brand], () => filterProducts());
+    watch([maxPrice, brand, sortBy], () => filterProducts());
 
     // --- TERMOS ---
     const acceptTerms = () => {
@@ -110,6 +129,7 @@ export function useStoreIndex(props) {
         minPrice,
         maxPrice,
         brand,
+        sortBy,
         showTermsModal,
         termsAccepted,
         acceptTerms,

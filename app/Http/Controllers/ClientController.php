@@ -8,13 +8,11 @@ use App\Models\Client;
 use App\Repositories\ClientRepository;
 use App\Services\ClientService;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
 use Inertia\Inertia;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class ClientController extends Controller
 {
-    use AuthorizesRequests;
-
     public function __construct(
         private readonly ClientRepository $repository,
         private readonly ClientService $service
@@ -30,159 +28,176 @@ class ClientController extends Controller
         $filters = $request->only(['search', 'document_type', 'is_active', 'contributor_type', 'active', 'blocked']);
         $clients = $this->repository->getFiltered($filters);
 
-        return Inertia::render('Clients/Index', [
+        return inertia('Clients/Index', [
             'clients' => $clients,
             'filters' => $filters,
         ]);
     }
 
     /**
-     * Formulário de criação.
+     * Mostra o formulário de criação.
      */
     public function create()
     {
         $this->authorize('create', Client::class);
-        return Inertia::render('Clients/Create');
+
+        return inertia('Clients/Create');
     }
 
     /**
-     * Salva novo cliente.
+     * Cadastra um novo cliente (admin).
      */
     public function store(ClientRequest $request)
     {
         $this->authorize('create', Client::class);
 
-        $data = $request->validated();
-        
-        // Regra: Se um usuário padrão (não admin) cadastrar, fica como bloqueado
-        if (!auth()->user()->isAdmin()) {
-            $data['is_active'] = false;
-        }
+        try {
+            $data = $request->validated();
+            $client = $this->service->create($data);
 
-        // Se não tem user_id, cria usuário junto
-        if (!isset($data['user_id'])) {
-            $userData = [
-                'name' => $data['user_name'] ?? $data['name'],
-                'email' => $data['user_email'],
-                'password' => $data['user_password'],
-            ];
-            
-            // Status do usuário segue o do cliente
-            $userData['is_active'] = $data['is_active'] ?? true;
-            
-            unset($data['user_name'], $data['user_email'], $data['user_password'], $data['user_password_confirmation']);
-            
-            $this->service->createClientWithUser($data, $userData);
-        } else {
-            $this->service->createClientOnly($data);
+            return redirect()->route('clients.index')
+                ->with('success', 'Cliente cadastrado com sucesso!');
+        } catch (\Exception $e) {
+            return back()
+                ->withInput()
+                ->with('error', 'Erro ao cadastrar cliente: ' . $e->getMessage());
         }
-
-        return redirect()->route('clients.index')->with('message', 'Cliente cadastrado com sucesso!');
     }
 
     /**
-     * Formulário de edição.
+     * Mostra detalhes do cliente.
      */
-    public function edit(Client $client)
+    public function show(Client $client)
     {
-        $this->authorize('update', $client);
-        $client->load('user');
-        return Inertia::render('Clients/Edit', [
-            'client' => $client
+        $this->authorize('view', $client);
+
+        $client->load(['user', 'addresses', 'sales' => function ($query) {
+            $query->orderBy('created_at', 'desc')->limit(10);
+        }]);
+
+        return inertia('Clients/Show', [
+            'client' => $client,
         ]);
     }
 
     /**
-     * Atualiza o cliente.
+     * Mostra formulário de edição.
+     */
+    public function edit(Client $client)
+    {
+        $this->authorize('update', $client);
+
+        return inertia('Clients/Edit', [
+            'client' => $client,
+        ]);
+    }
+
+    /**
+     * Atualiza cliente.
      */
     public function update(ClientRequest $request, Client $client)
     {
         $this->authorize('update', $client);
 
-        $data = $request->validated();
-        
-        // Atualiza usuário associado se necessário
-        if ($client->user) {
-            $userData = [
-                'name' => $data['user_name'] ?? $data['name'],
-                'email' => $data['user_email'],
-            ];
+        try {
+            $data = $request->validated();
             
-            if ($request->filled('user_password')) {
-                $userData['password'] = $request->user_password;
+            // Se tiver dados de usuário, atualiza também
+            if (isset($data['user'])) {
+                $userData = $data['user'];
+                $updatedClient = $this->service->updateClientWithUser($client, $data, $userData);
+            } else {
+                $updatedClient = $this->repository->update($client, $data);
             }
 
-            unset($data['user_name'], $data['user_email'], $data['user_password'], $data['user_password_confirmation']);
-            
-            $this->service->updateClientWithUser($client, $data, $userData);
-        } else {
-            $this->repository->update($client, $data);
+            return redirect()->route('clients.index')
+                ->with('success', 'Cliente atualizado com sucesso!');
+        } catch (\Exception $e) {
+            return back()
+                ->withInput()
+                ->with('error', 'Erro ao atualizar cliente: ' . $e->getMessage());
         }
-
-        return redirect()->route('clients.index')->with('message', 'Cliente atualizado com sucesso!');
     }
 
     /**
-     * Remove o cliente (apenas Admin + regra de 5 anos).
+     * Ativa/Inativa cliente.
+     */
+    public function toggleStatus(Client $client)
+    {
+        $this->authorize('update', $client);
+
+        try {
+            $newStatus = !$client->is_active;
+            $this->repository->update($client, ['is_active' => $newStatus]);
+
+            return redirect()->route('clients.index')
+                ->with('success', "Cliente " . ($newStatus ? 'ativado' : 'inativado') . " com sucesso!");
+        } catch (\Exception $e) {
+            return back()->with('error', 'Erro ao alterar status: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Exclui cliente.
      */
     public function destroy(Client $client)
     {
         $this->authorize('delete', $client);
 
-        $this->repository->delete($client);
+        try {
+            $this->repository->delete($client);
 
-        return redirect()->route('clients.index')->with('message', 'Cliente excluído com sucesso!');
+            return redirect()->route('clients.index')
+                ->with('success', 'Cliente excluído com sucesso!');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Erro ao excluir cliente: ' . $e->getMessage());
+        }
     }
 
     /**
-     * Ativa/Desativa o cliente.
+     * Busca clientes.
      */
-    public function toggleStatus(Client $client)
+    public function search(Request $request)
     {
-        $this->authorize('toggleStatus', $client);
+        $this->authorize('viewAny', Client::class);
 
-        $client->update(['is_active' => !$client->is_active]);
+        $search = $request->get('search');
+        $clients = $this->repository->search($search);
 
-        if ($client->user) {
-            $client->user->update(['is_active' => $client->is_active]);
-        }
-
-        $status = $client->is_active ? 'ativado' : 'desativado';
-        return back()->with('message', "Cliente $status com sucesso!");
+        return response()->json([
+            'success' => true,
+            'data' => $clients,
+        ]);
     }
 
     /**
-     * Métodos para área do cliente (Frontend).
+     * Valida documento (CPF/CNPJ)
      */
-    public function showClientData()
+    public function validateDocument(Request $request): JsonResponse
     {
-        $user = auth()->user();
-        $client = $this->repository->findByUserId($user->id);
-
-        if (!$client) {
-            return back()->with('error', 'Dados de cliente não encontrados.');
+        $document = $request->input('document');
+        
+        if (!$document) {
+            return $this->error('Documento é obrigatório.');
         }
 
-        $client->load(['addresses' => fn($q) => $q->orderBy('is_delivery_address', 'desc')]);
+        $documentType = $this->service->getDocumentType($document);
+        $isValid = false;
 
-        return Inertia::render('Client/Profile', [
-            'client' => $client
-        ]);
-    }
+        if ($documentType === 'CPF') {
+            $isValid = $this->service->isValidCPF($document);
+        } elseif ($documentType === 'CNPJ') {
+            $isValid = $this->service->isValidCNPJ($document);
+        }
 
-    public function updateClientData(Request $request)
-    {
-        $user = auth()->user();
-        $client = $this->repository->findByUserId($user->id);
-
-        // Validação básica para o próprio cliente
-        $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'phone1' => 'nullable|string|max:20',
-        ]);
-
-        $this->repository->update($client, $data);
-
-        return back()->with('message', 'Dados atualizados com sucesso!');
+        return $isValid ? $this->success([
+            'document_type' => $documentType,
+            'valid' => $isValid,
+            'document' => $document,
+        ], 'Documento válido.') : $this->validation([
+            'document_type' => $documentType,
+            'valid' => $isValid,
+            'document' => $document,
+        ], 'Documento inválido.');
     }
 }

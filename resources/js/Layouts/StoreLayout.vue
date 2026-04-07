@@ -4,7 +4,7 @@ import {
     Search, ShoppingBag, Cloud, User as UserIcon, 
     Settings, Package, LogOut, ChevronDown 
 } from 'lucide-vue-next';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { onClickOutside } from '@vueuse/core';
 
 const page = usePage();
@@ -22,17 +22,38 @@ const toggleDropdown = () => {
     isDropdownOpen.value = !isDropdownOpen.value;
 };
 
+// Estado da busca
+const searchValue = ref('');
+
 // Recebe o valor da busca do Index
-defineProps({
+const props = defineProps({
     searchTerm: String
 });
 
 // Avisa o Index que o usuário digitou algo
 const emit = defineEmits(['update:searchTerm']);
+
+// Função para buscar com Enter
+const handleSearch = () => {
+    if (searchValue.value.trim()) {
+        window.location.href = `/?search=${encodeURIComponent(searchValue.value)}`;
+    }
+};
+
+// Função para buscar com clique na lupa
+const handleLupaClick = () => {
+    handleSearch();
+};
+
+// Atualiza o valor quando o prop muda
+watch(() => props.searchTerm, (newValue) => {
+    searchValue.value = newValue || '';
+});
+
 </script>
 
 <template>
-    <div class="min-h-screen bg-gradient-to-b from-slate-200 to-slate-100 text-slate-900 font-sans pb-20">
+    <div class="min-h-screen bg-gradient-to-b from-red-200 to-red-100 text-slate-900 font-sans pb-20">
         <!-- ... resto do template ... -->
         <div class="bg-gradient-to-r from-orange-600 to-red-600 text-white py-2 px-6 flex justify-center items-center gap-4 shadow-md">
             <div class="flex items-center gap-2">
@@ -51,14 +72,20 @@ const emit = defineEmits(['update:searchTerm']);
                 </Link>
                 
                 <div class="hidden md:flex flex-1 max-w-md mx-10 relative">
-                    <Search class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                     <input 
-                        :value="searchTerm" 
-                        @input="$emit('update:searchTerm', $event.target.value)"
+                        v-model="searchValue"
+                        @keyup.enter="handleSearch"
                         type="text" 
                         placeholder="Buscar na loja..."
-                        class="w-full bg-slate-800 border-transparent rounded-2xl pl-11 pr-4 py-3 text-sm text-white placeholder-slate-500 focus:bg-slate-700 focus:ring-2 focus:ring-indigo-500 transition-all outline-none"
+                        class="w-full bg-slate-800 border-transparent rounded-2xl pl-4 pr-24 py-3 text-sm text-white placeholder-slate-500 focus:bg-slate-700 focus:ring-2 focus:ring-indigo-500 transition-all outline-none"
                     />
+                    <button 
+                        @click="handleLupaClick"
+                        class="absolute right-2 top-1/2 -translate-y-1/2 bg-primary hover:bg-primary-hover text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-lg shadow-primary/20 flex items-center gap-2"
+                    >
+                        <Search class="w-4 h-4" />
+                        <span>Pesquisar</span>
+                    </button>
                 </div>
 
                 <div class="flex items-center gap-6">

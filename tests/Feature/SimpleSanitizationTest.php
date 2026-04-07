@@ -3,15 +3,15 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use App\Models\Supplier;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
+use PHPUnit\Framework\Attributes\Test;
 
 class SimpleSanitizationTest extends TestCase
 {
     use RefreshDatabase;
 
-    /** @test */
+    #[Test]
     public function middleware_sanitizes_input_data()
     {
         // Testa diretamente o helper
@@ -36,7 +36,7 @@ class SimpleSanitizationTest extends TestCase
         $this->assertEquals('<!-- Google Tag Manager --><script>dataLayer = [];</script>', $sanitized['google_tag_manager']);
     }
 
-    /** @test */
+    #[Test]
     public function seo_sanitization_works()
     {
         $seoData = [
@@ -61,7 +61,7 @@ class SimpleSanitizationTest extends TestCase
         $this->assertEquals('<!-- Google Tag Manager --><script>dataLayer = [];</script>', $sanitized['google_tag_manager']);
     }
 
-    /** @test */
+    #[Test]
     public function xss_payloads_are_removed()
     {
         $xssPayloads = [
@@ -87,7 +87,7 @@ class SimpleSanitizationTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function supplier_creation_is_sanitized()
     {
         $user = User::factory()->create();

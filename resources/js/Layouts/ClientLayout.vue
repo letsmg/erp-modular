@@ -38,12 +38,12 @@ const menuCliente = [
 
     <!-- Sidebar -->
     <aside :class="[
-        'fixed inset-y-0 left-0 w-72 bg-white border-r border-slate-100 flex flex-col z-40 transition-all duration-300 md:translate-x-0 shadow-2xl md:shadow-none',
+        'fixed inset-y-0 left-0 w-72 bg-blue-950 text-white flex flex-col z-40 transition-all duration-300 md:translate-x-0 shadow-2xl md:shadow-none',
         isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
     ]">
 
         <!-- Logo / Loja -->
-        <div class="p-8 border-b border-slate-50 flex justify-between items-center bg-slate-900">
+        <div class="p-8 border-b border-blue-900 flex justify-between items-center bg-blue-950">
             <div>
                 <Link href="/" class="text-xl font-black tracking-tighter uppercase text-white">
                     Erp<span class="text-primary">Vue</span>
@@ -57,14 +57,14 @@ const menuCliente = [
         </div>
 
         <!-- Perfil Resumo -->
-        <div class="p-6 bg-slate-50/50 border-b border-slate-50">
+        <div class="p-6 bg-blue-900/30 border-b border-blue-900/50">
             <div class="flex items-center gap-4">
                 <div class="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20">
                     <span class="text-white font-black text-lg">{{ user.first_name[0] }}</span>
                 </div>
                 <div class="flex flex-col">
-                    <span class="text-sm font-black text-slate-900 uppercase tracking-tight truncate w-40">{{ user.name }}</span>
-                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cliente Prime</span>
+                    <span class="text-sm font-black text-white uppercase tracking-tight truncate w-40">{{ user.name }}</span>
+                    <span class="text-[10px] font-bold text-blue-300 uppercase tracking-widest">Cliente Prime</span>
                 </div>
             </div>
         </div>
@@ -75,15 +75,15 @@ const menuCliente = [
                 <!-- Ativo -->
                 <Link v-if="item.ativo"
                     :href="item.rota"
-                    class="flex items-center gap-4 p-4 rounded-2xl text-slate-600 hover:bg-slate-50 hover:text-primary transition-all group border border-transparent hover:border-slate-100"
-                    :class="{ 'bg-primary/5 text-primary border-primary/10 font-black': page.url === item.rota }">
+                    class="flex items-center gap-4 p-4 rounded-2xl text-blue-200 hover:bg-blue-900 hover:text-white transition-all group border border-transparent hover:border-blue-700"
+                    :class="{ 'bg-blue-800 text-white border-blue-600 font-black': page.url === item.rota }">
                     <component :is="item.icone" class="w-5 h-5 group-hover:scale-110 transition-transform"/>
                     <span class="text-xs font-black uppercase tracking-widest">{{ item.nome }}</span>
                 </Link>
 
                 <!-- Desabilitado -->
                 <div v-else
-                    class="flex items-center gap-4 p-4 rounded-2xl text-slate-300 cursor-not-allowed opacity-50 grayscale border border-dashed border-slate-100">
+                    class="flex items-center gap-4 p-4 rounded-2xl text-blue-400/50 cursor-not-allowed opacity-50 grayscale border border-dashed border-blue-800/30">
                     <component :is="item.icone" class="w-5 h-5"/>
                     <span class="text-xs font-black uppercase tracking-widest">{{ item.nome }} (Breve)</span>
                 </div>
@@ -91,15 +91,15 @@ const menuCliente = [
         </nav>
 
         <!-- Voltar Loja & Logout -->
-        <div class="p-6 space-y-3 border-t border-slate-50 bg-slate-50/30">
+        <div class="p-6 space-y-3 border-t border-blue-900/50 bg-blue-900/30">
             <Link href="/"
-                class="flex items-center gap-4 text-slate-500 hover:text-slate-900 p-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all hover:bg-white border border-transparent hover:border-slate-100 shadow-sm">
+                class="flex items-center gap-4 text-blue-300 hover:text-white p-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all hover:bg-blue-800 border border-transparent hover:border-blue-600 shadow-sm">
                 <ArrowLeft class="w-4 h-4"/>
                 Voltar para Loja
             </Link>
 
             <Link :href="route('client.logout')" method="post" as="button"
-                class="w-full flex items-center gap-4 text-red-500 hover:bg-red-50 p-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all border border-transparent hover:border-red-100 shadow-sm">
+                class="w-full flex items-center gap-4 text-red-400 hover:bg-red-900/30 p-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all border border-transparent hover:border-red-600 shadow-sm">
                 <LogOut class="w-4 h-4"/>
                 Sair da Conta
             </Link>

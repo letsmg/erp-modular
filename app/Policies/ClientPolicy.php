@@ -13,7 +13,7 @@ class ClientPolicy
      */
     public function viewAny(User $user): Response
     {
-        // Apenas admin e operator podem ver clientes
+        // Apenas admin e operator podem ver clientes no CRUD administrativo
         return $user->isAdmin() || $user->isOperator()
             ? Response::allow()
             : Response::deny('Apenas administradores e operadores podem visualizar clientes.');

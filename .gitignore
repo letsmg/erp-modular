@@ -33,6 +33,29 @@ user.ini
 /routes/private.php
 google-credentials.json
 
+# Arquivos sensíveis de produção e configurações
+docker-compose.prod.yml
+docker-compose.oracle.yml
+*.log
+logs/
+data/
+backup/
+.env.local
+.env.staging
+
+# Arquivos temporários e cache
+*.tmp
+*.cache
+check_redis.php
+INTEGRATION_GUIDE.md
+TRENDING_INTEGRATION.md
+
+# Configurações de banco e senhas
+config/database.prod.php
+config/database.staging.php
+*.sql
+*.dump
+
 
 
 

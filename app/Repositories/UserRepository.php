@@ -9,12 +9,34 @@ class UserRepository
 {
     public function getAllOrdered()
     {
-        return User::orderBy('name')->get();
+        $query = User::where('access_level', '!=', 2)  // Exclui apenas clientes
+            ->orderBy('name');
+        
+        // DEBUG: Mostrar SQL e bindings
+        // dd([
+        //     'sql' => $query->toSql(),
+        //     'bindings' => $query->getBindings(),
+        //     'count' => $query->count(),
+        //     'results' => $query->get()->toArray()
+        // ]);
+        
+        return $query->get();
     }
 
     public function getNonAdmin()
     {
         return User::where('access_level', 0)
+            ->orderBy('name')
+            ->get();
+    }
+
+    public function getNonAdminWithSelf($currentUserId)
+    {
+        return User::where(function($query) use ($currentUserId) {
+                $query->where('access_level', 0)  // Todos operadores
+                      ->orWhere('id', $currentUserId);  // + ele mesmo
+            })
+            ->where('access_level', '!=', 2)  // Exclui clientes
             ->orderBy('name')
             ->get();
     }

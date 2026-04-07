@@ -17,6 +17,7 @@ use App\Policies\ProductPolicy;
 
 use App\Models\Client;
 use App\Policies\ClientPolicy;
+use App\Policies\SelfClientPolicy;
 
 use App\Models\ShoppingCart;
 use App\Policies\ShoppingCartPolicy;

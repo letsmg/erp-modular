@@ -142,7 +142,7 @@ class ClientService
     /**
      * Valida CNPJ
      */
-    private function isValidCNPJ(string $cnpj): bool
+    public function isValidCNPJ(string $cnpj): bool
     {
         // Verifica se todos os dígitos são iguais
         if (preg_match('/(\d)\1{13}/', $cnpj)) {
@@ -175,7 +175,7 @@ class ClientService
     /**
      * Retorna tipo de documento
      */
-    private function getDocumentType(string $document): string
+    public function getDocumentType(string $document): string
     {
         return strlen($document) === 11 ? 'CPF' : 'CNPJ';
     }

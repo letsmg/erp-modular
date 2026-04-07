@@ -121,6 +121,61 @@ Certifique-se de que as extensões **pdo_pgsql** e **pgsql** estão ativas no `p
 
 ---
 
+## 5. Configurar Redis (Opcional - Recomendado)
+
+Para melhor performance de busca e cache, configure o Redis:
+
+### Instalar Redis
+
+**Windows:**
+```bash
+# Baixe e instale o Redis para Windows
+# Ou use WSL/Docker
+```
+
+**Linux/macOS:**
+```bash
+sudo apt-get install redis-server  # Ubuntu/Debian
+brew install redis                   # macOS
+```
+
+### Configurar Ambiente
+
+Adicione ao seu `.env`:
+
+```env
+# Redis Cache
+REDIS_HOST=127.0.0.1
+REDIS_PASSWORD=null
+REDIS_PORT=6379
+REDIS_DB=0
+
+# Cache Driver
+CACHE_STORE=redis
+SESSION_DRIVER=redis
+QUEUE_CONNECTION=redis
+```
+
+### Verificar Funcionamento
+
+```bash
+# Teste conexão Redis
+php artisan tinker
+> Redis::ping();  # Deve retornar "+PONG"
+```
+
+### Benefícios
+
+- **Busca ultra rápida** (cache inteligente)
+- **Sugestões automáticas** baseadas em buscas anteriores
+- **Performance otimizada** para consultas frequentes
+- **Persistência de dados** de cache
+
+NOTE
+Redis é opcional mas **altamente recomendado** para melhor performance. Sem Redis, o sistema funcionará normalmente com PostgreSQL.
+
+---
+
 ## 4. Rodar migrações
 
 ```bash
@@ -332,6 +387,61 @@ DB_PASSWORD=123456
 
 NOTE
 Make sure **pdo_pgsql** and **pgsql** extensions are enabled in `php.ini`.
+
+---
+
+## 5. Configure Redis (Optional - Recommended)
+
+For better search performance and caching, configure Redis:
+
+### Install Redis
+
+**Windows:**
+```bash
+# Download and install Redis for Windows
+# Or use WSL/Docker
+```
+
+**Linux/macOS:**
+```bash
+sudo apt-get install redis-server  # Ubuntu/Debian
+brew install redis                   # macOS
+```
+
+### Configure Environment
+
+Add to your `.env`:
+
+```env
+# Redis Cache
+REDIS_HOST=127.0.0.1
+REDIS_PASSWORD=null
+REDIS_PORT=6379
+REDIS_DB=0
+
+# Cache Driver
+CACHE_STORE=redis
+SESSION_DRIVER=redis
+QUEUE_CONNECTION=redis
+```
+
+### Verify Installation
+
+```bash
+# Test Redis connection
+php artisan tinker
+> Redis::ping();  # Should return "+PONG"
+```
+
+### Benefits
+
+- **Ultra-fast search** (intelligent cache)
+- **Automatic suggestions** based on previous searches
+- **Optimized performance** for frequent queries
+- **Cache data persistence**
+
+NOTE
+Redis is optional but **highly recommended** for better performance. Without Redis, the system will work normally with PostgreSQL.
 
 ---
 
