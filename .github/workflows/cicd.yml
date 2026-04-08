@@ -1,0 +1,75 @@
+name: 🚀 Build & Deploy (Sem Testes)
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  # JOB 1: Compilação pesada no GitHub
+  build-and-pack:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐘 Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, bcmath, gd, zip
+
+      - name: 📦 Install Composer
+        run: composer install --no-dev --optimize-autoloader --no-interaction
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: 🔨 Build Vite Assets (RAM do GitHub)
+        run: |
+          npm install
+          npm run build
+
+      - name: 🤐 Criar Pacote de Deploy
+        # Zipamos ignorando o lixo (node_modules, .git, testes)
+        run: zip -r deploy.zip . -x ".git/*" "node_modules/*" ".github/*" "tests/*"
+
+      - name: 🔑 Configure SSH
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: 🚀 Transferir e Extrair no Servidor
+        run: |
+          scp -o StrictHostKeyChecking=no deploy.zip ubuntu@147.15.80.52:/tmp/
+
+          ssh -o StrictHostKeyChecking=no ubuntu@147.15.80.52 << 'EOF'
+            set -e
+            cd /var/www/erp
+            
+            echo "📂 Preparando diretório..."
+            sudo chown -R ubuntu:www-data /var/www/erp
+            
+            echo "📦 Extraindo build..."
+            unzip -o /tmp/deploy.zip -d .
+            rm /tmp/deploy.zip
+
+            echo "🗄️ Database & Cache..."
+            # Mantendo seu padrão de portfólio
+            php artisan migrate:fresh --seed --force
+            php artisan optimize
+
+            echo "🔗 Storage Link..."
+            rm -rf public/storage && php artisan storage:link
+
+            echo "🔐 Ajustando Permissões..."
+            sudo chown -R www-data:www-data /var/www/erp
+            sudo chmod -R 775 storage bootstrap/cache
+
+            echo "🔄 Reiniciando PHP..."
+            sudo systemctl restart php8.3-fpm
+            
+            echo "✅ Deploy Finalizado!"
+          EOF
