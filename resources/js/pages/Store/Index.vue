@@ -67,15 +67,24 @@ const scroll = (id, direction) => {
     const el = document.getElementById(id);
     if (!el) return;
 
-    // Calcula a largura de um item (1/3 do container)
-    const itemWidth = el.offsetWidth / 3;
-    const isAtEnd = el.scrollLeft + el.offsetWidth >= el.scrollWidth - 10;
+    // No mobile, queremos rolar a largura quase total do card visível
+    // No desktop (md), mantemos a lógica de 1/3
+    const isMobile = window.innerWidth < 768;
+    const itemWidth = isMobile ? el.offsetWidth * 0.85 : el.offsetWidth / 3;
 
-    if (direction === 'right' && isAtEnd) {
-        el.scrollTo({ left: 0, behavior: 'smooth' });
+    // Força o cancelamento de qualquer scroll em andamento antes de iniciar o novo
+    // Isso evita o bug de "dois cliques" no Firefox
+    const currentPos = el.scrollLeft;
+
+    if (direction === 'right') {
+        const isAtEnd = el.scrollLeft + el.offsetWidth >= el.scrollWidth - 15;
+        if (isAtEnd) {
+            el.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+            el.scrollTo({ left: currentPos + itemWidth, behavior: 'smooth' });
+        }
     } else {
-        const offset = direction === 'left' ? -itemWidth : itemWidth;
-        el.scrollBy({ left: offset, behavior: 'smooth' });
+        el.scrollTo({ left: currentPos - itemWidth, behavior: 'smooth' });
     }
 };
 
@@ -327,30 +336,33 @@ const clearFilters = () => {
 
         <section v-if="featuredProducts?.length" class="max-w-7xl mx-auto px-4 md:px-6 mt-12">
             <div class="relative group">
-                <div id="hero-carousel" class="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide gap-4 rounded-[2.5rem] md:rounded-[4rem] shadow-2xl">
+                <div id="hero-carousel" class="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide gap-4 rounded-[2.5rem] md:rounded-[4rem] shadow-2xl scroll-smooth">
                     <div v-for="p in featuredProducts" :key="p.slug" 
-                         class="min-w-[85%] md:min-w-[33.333%] snap-center relative aspect-[16/9] md:aspect-[4/3] bg-blue-900 overflow-hidden rounded-[2rem] md:rounded-[3rem]">
-                        <img :src="p.images?.[0] ? '/storage/products/' + p.images[0].path : 'https://placehold.co/1200x500'" 
-                             class="w-full h-full object-cover opacity-40 transition-transform duration-1000 group-hover:scale-110 lazyload"
-                             loading="lazy"
-                             :alt="p.description" />
+                        class="min-w-[85%] md:min-w-[33.333%] snap-center relative aspect-[16/9] md:aspect-[4/3] overflow-hidden rounded-[2rem] md:rounded-[3rem] isolate border border-transparent">
                         
-                        <div class="absolute inset-0 flex flex-col justify-end md:justify-center px-6 md:px-8 text-white bg-gradient-to-t md:bg-gradient-to-r from-blue-900 via-blue-900/60 to-transparent pb-6 md:pb-0">
+                        <img :src="p.images?.[0] ? '/storage/products/' + p.images[0].path : 'https://placehold.co/1200x500'" 
+                            class="w-full h-full object-cover opacity-100 transition-transform duration-1000 group-hover:scale-110 lazyload"
+                            style="backface-visibility: hidden; transform: translateZ(0);"
+                            loading="lazy" 
+                            :alt="p.description" />
+                        
+                        <div class="absolute inset-0 flex flex-col justify-end md:justify-center px-6 md:px-8 text-white bg-gradient-to-t md:bg-gradient-to-r from-black/80 via-black/50 to-transparent pb-6 md:pb-0">
                             <span class="bg-primary w-fit px-3 py-1 rounded-full text-[9px] font-black uppercase mb-2 md:mb-3 tracking-[0.15em]">Destaque</span>
                             <h2 class="text-lg md:text-2xl font-black mb-2 tracking-tight leading-tight max-w-md uppercase italic line-clamp-2">{{ p.description }}</h2>
                             <p class="text-lg md:text-xl text-primary-hover mb-3 md:mb-4 font-mono font-bold">R$ {{ p.sale_price }}</p>
                             
                             <Link :href="route('store.product', p.slug)" 
-                                  class="bg-white text-slate-900 px-4 md:px-6 py-2 md:py-3 rounded-xl font-black uppercase text-[10px] w-fit hover:bg-primary hover:text-white transition-all shadow-lg hover:-translate-y-1">
+                                class="bg-white text-slate-900 px-4 md:px-6 py-2 md:py-3 rounded-xl font-black uppercase text-[10px] w-fit hover:bg-primary hover:text-white transition-all shadow-lg hover:-translate-y-1">
                                 Ver Produto
                             </Link>
                         </div>
                     </div>
                 </div>
-                <button @click="scroll('hero-carousel', 'left')" class="absolute left-2 md:left-8 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white text-white hover:text-black p-2 md:p-5 rounded-full backdrop-blur-xl transition border border-white/20 shadow-lg">
+
+                <button @click="scroll('hero-carousel', 'left')" class="absolute left-2 md:left-8 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white text-white hover:text-black p-2 md:p-5 rounded-full backdrop-blur-xl transition border border-white/20 shadow-lg z-20">
                     <ChevronLeft class="w-5 h-5 md:w-6 md:h-6"/>
                 </button>
-                <button @click="scroll('hero-carousel', 'right')" class="absolute right-2 md:right-8 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white text-white hover:text-black p-2 md:p-5 rounded-full backdrop-blur-xl transition border border-white/20 shadow-lg">
+                <button @click="scroll('hero-carousel', 'right')" class="absolute right-2 md:right-8 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white text-white hover:text-black p-2 md:p-5 rounded-full backdrop-blur-xl transition border border-white/20 shadow-lg z-20">
                     <ChevronRight class="w-5 h-5 md:w-6 md:h-6"/>
                 </button>
             </div>
