@@ -1,11 +1,10 @@
-name: 🚀 Build & Deploy (Sem Testes)
+name: 🚀 Build & Deploy Total Clean
 
 on:
   push:
     branches: [main]
 
 jobs:
-  # JOB 1: Compilação pesada no GitHub
   build-and-pack:
     runs-on: ubuntu-latest
     steps:
@@ -31,9 +30,11 @@ jobs:
         run: |
           npm install
           npm run build
+          # Validação: O build PRECISA ter gerado o manifesto
+          test -f public/build/manifest.json && echo "✅ Manifesto gerado!" || exit 1
 
       - name: 🤐 Criar Pacote de Deploy
-        # Zipamos ignorando o lixo (node_modules, .git, testes)
+        # Zipamos tudo, incluindo o vendor e o public/build prontos
         run: zip -r deploy.zip . -x ".git/*" "node_modules/*" ".github/*" "tests/*"
 
       - name: 🔑 Configure SSH
@@ -41,7 +42,7 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: 🚀 Transferir e Extrair no Servidor
+      - name: 🚀 Reset Total e Deploy no Servidor
         run: |
           scp -o StrictHostKeyChecking=no deploy.zip ubuntu@147.15.80.52:/tmp/
 
@@ -49,27 +50,33 @@ jobs:
             set -e
             cd /var/www/erp
             
-            echo "📂 Preparando diretório..."
-            sudo chown -R ubuntu:www-data /var/www/erp
-            
-            echo "📦 Extraindo build..."
+            echo "🧹 Limpeza Total (Preservando .env e storage)..."
+            # Remove arquivos, mas mantém o que é essencial do servidor
+            find . -maxdepth 1 ! -name '.env' ! -name 'storage' ! -name '.' -exec rm -rf {} +
+
+            echo "📦 Extraindo novo código limpo..."
             unzip -o /tmp/deploy.zip -d .
             rm /tmp/deploy.zip
 
             echo "🗄️ Database & Cache..."
-            # Mantendo seu padrão de portfólio
+            # Força o refresh para garantir que o Portfólio esteja zerado e limpo
             php artisan migrate:fresh --seed --force
-            php artisan optimize
+            php artisan optimize:clear
+            php artisan config:cache
+            php artisan route:cache
+            php artisan view:cache
 
             echo "🔗 Storage Link..."
-            rm -rf public/storage && php artisan storage:link
+            # Garante que o link simbólico seja refeito após a limpeza
+            rm -rf public/storage
+            php artisan storage:link
 
-            echo "🔐 Ajustando Permissões..."
+            echo "🔐 Ajustando Permissões Finais..."
             sudo chown -R www-data:www-data /var/www/erp
-            sudo chmod -R 775 storage bootstrap/cache
-
-            echo "🔄 Reiniciando PHP..."
+            sudo chmod -R 775 storage bootstrap/cache public/build
+            
+            echo "🔄 Reiniciando PHP-FPM..."
             sudo systemctl restart php8.3-fpm
             
-            echo "✅ Deploy Finalizado!"
+            echo "✅ Deploy Finalizado com Sucesso!"
           EOF
