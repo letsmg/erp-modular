@@ -65,7 +65,7 @@ jobs:
             
             # 3. Rodar migrations na pasta nova ANTES de ativar o site
             cd /var/www/erp-vue-modular_new
-            sudo -u www-data php artisan migrate:seed --force
+            sudo -u www-data php artisan migrate --seed --force
             sudo -u www-data php artisan storage:link
             sudo -u www-data php artisan optimize
             
