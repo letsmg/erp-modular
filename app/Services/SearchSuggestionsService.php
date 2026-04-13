@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Modules\Product\Models\Product;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
@@ -172,7 +173,7 @@ class SearchSuggestionsService
         $termLower = strtolower($term);
         
         // Busca produtos onde a descrição contém o termo (em qualquer parte)
-        $products = Modules\Product\Models\Product::where('is_active', true)
+        $products = Product::where('is_active', true)
             ->where(function ($query) use ($termLower) {
                 $query->whereRaw("LOWER(description) LIKE LOWER(?)", ['%' . $termLower . '%'])
                       ->orWhereRaw("LOWER(barcode) LIKE LOWER(?)", ['%' . $termLower . '%']);
@@ -265,7 +266,7 @@ class SearchSuggestionsService
     {
         $termLower = strtolower($term);
         
-        $brands = Modules\Product\Models\Product::where('is_active', true)
+        $brands = Product::where('is_active', true)
             ->whereNotNull('brand')
             ->whereRaw("LOWER(brand) LIKE LOWER(?)", ['%' . $termLower . '%'])
             ->select('brand')
@@ -300,7 +301,7 @@ class SearchSuggestionsService
     {
         $termLower = strtolower($term);
         
-        $models = Modules\Product\Models\Product::where('is_active', true)
+        $models = Product::where('is_active', true)
             ->whereNotNull('model')
             ->whereRaw("LOWER(model) LIKE LOWER(?)", ['%' . $termLower . '%'])
             ->select('model')

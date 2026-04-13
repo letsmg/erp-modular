@@ -2,6 +2,7 @@
 
 namespace Modules\Supplier\Http\Controllers;
 
+use App\Http\Controllers\Controller;
 use Modules\Supplier\Models\Supplier;
 use Illuminate\Http\Request;
 use Inertia\Inertia;

@@ -65,7 +65,7 @@ watch(() => page.url, () => isMobileMenuOpen.value = false);
 </script>
 
 <template>
-    <div class="min-h-screen bg-blue-100 flex overflow-x-hidden font-sans text-slate-900">
+    <div class="min-h-screen bg-blue-50 flex overflow-x-hidden font-sans text-slate-900">
         
         <Transition 
             enter-active-class="transition duration-300 ease-out" enter-from-class="opacity-0" enter-to-class="opacity-100"
@@ -79,7 +79,7 @@ watch(() => page.url, () => isMobileMenuOpen.value = false);
             isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full' 
         ]">
             <div class="p-6 border-b border-indigo-900/50 flex justify-between items-center">
-                <span class="font-black text-xl tracking-tighter">ERP<span class="text-indigo-400">PRO</span></span>
+                <span class="font-black text-xl tracking-tighter">ERP Vue Modular</span>
                 <button @click="isMobileMenuOpen = false" class="md:hidden p-1 hover:bg-indigo-900 rounded-lg transition-colors">
                     <X class="w-6 h-6"/>
                 </button>

@@ -6,7 +6,7 @@ import path from 'path';
 
 export default defineConfig({
     server: {
-        port: 5174,
+        port: 5175,
         host: '127.0.0.1', // Força IPv4
         strictPort: true
     },

@@ -2,6 +2,7 @@
 
 namespace Modules\User\Http\Controllers;
 
+use App\Http\Controllers\Controller;
 use Modules\User\Models\User;
 use Inertia\Inertia;
 use Modules\User\Services\UserService;

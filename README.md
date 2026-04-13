@@ -1,4 +1,4 @@
-<img src="https://raw.githubusercontent.com/letsmg/erp-vue-laravel/main/pacman-contribution-graph.svg" />
+<img src="https://raw.githubusercontent.com/letsmg/erp-vue-modular/main/pacman-contribution-graph.svg" />
 
 # 🌌 Erp Vue Modular — Smart Business Management
 
@@ -76,8 +76,8 @@ Esses atalhos utilizam **Custom Events** disparados dentro do `AuthenticatedLayo
 ## 1. Clonar o repositório
 
 ```bash
-git clone https://github.com/letsmg/erp-vue-laravel.git
-cd erp-vue-laravel
+git clone https://github.com/letsmg/erp-vue-modular.git
+cd erp-vue-modular
 ```
 
 ---
@@ -345,8 +345,8 @@ These shortcuts use **Custom Events** triggered inside `AuthenticatedLayout.vue`
 ## 1. Clone repository
 
 ```bash
-git clone https://github.com/letsmg/erp-vue-laravel.git
-cd erp-vue-laravel
+git clone https://github.com/letsmg/erp-vue-modular.git
+cd erp-vue-modular
 ```
 
 ---
@@ -577,6 +577,6 @@ MIT License
 © 2026 — Built with scalability in mind
 </p>
 
-<img src="https://raw.githubusercontent.com/letsmg/erp-vue-laravel/main/snake-dark.svg?palette=github-dark" />
+<img src="https://raw.githubusercontent.com/letsmg/erp-vue-modular/main/snake-dark.svg?palette=github-dark" />
 
 Copyright (c) 2026 Luiz Eduardo

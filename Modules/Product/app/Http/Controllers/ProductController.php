@@ -2,6 +2,7 @@
 
 namespace Modules\Product\Http\Controllers;
 
+use App\Http\Controllers\Controller;
 use Modules\Product\Models\Product;
 use Modules\Product\Http\Requests\Product\StoreProductRequest;
 use Modules\Product\Services\ProductService;

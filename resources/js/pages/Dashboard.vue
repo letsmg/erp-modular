@@ -63,7 +63,7 @@ const techIcons = [
         <template #header>
             <div class="flex justify-between items-center">
                 <h2 class="font-semibold text-xl text-gray-800 leading-tight">Painel de Controle</h2>
-                <a href="https://github.com/letsmg/erp-vue-laravel" target="_blank" class="flex items-center gap-2 text-sm font-bold text-indigo-600 hover:text-indigo-800 transition">
+                <a href="https://github.com/letsmg/erp-vue-modular" target="_blank" class="flex items-center gap-2 text-sm font-bold text-indigo-600 hover:text-indigo-800 transition">
                     <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg" class="w-5 h-5" />
                     Repositório do Projeto
                 </a>
