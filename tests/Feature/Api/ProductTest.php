@@ -2,8 +2,8 @@
 
 namespace Tests\Feature\Api;
 
-use App\Models\Product;
-use App\Models\User;
+use Modules\Product\Models\Product;
+use Modules\User\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;

@@ -1,11 +1,11 @@
 <?php
 
-use App\Http\Controllers\ClientController;
+use Modules\Client\Http\Controllers\ClientController;
 use App\Http\Controllers\ShoppingCartController;
-use App\Http\Controllers\UserController;
+use Modules\User\Http\Controllers\UserController;
 use App\Http\Controllers\Auth\LoginController;
-use App\Http\Controllers\SupplierController;
-use App\Http\Controllers\ProductController;
+use Modules\Supplier\Http\Controllers\SupplierController;
+use Modules\Product\Http\Controllers\ProductController;
 use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StoreController;

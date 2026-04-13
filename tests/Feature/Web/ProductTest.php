@@ -2,9 +2,9 @@
 
 namespace Tests\Feature\Web;
 
-use App\Models\Product;
-use App\Models\User;
-use App\Models\Supplier;
+use Modules\Product\Models\Product;
+use Modules\User\Models\User;
+use Modules\Supplier\Models\Supplier;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;

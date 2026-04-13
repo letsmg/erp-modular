@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Services\AuthService;
+use Modules\Auth\Services\AuthService;
 use App\Services\JwtService;
 use Inertia\Inertia;
 use App\Http\Requests\Auth\LoginRequest;

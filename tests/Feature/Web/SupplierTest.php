@@ -2,8 +2,8 @@
 
 namespace Tests\Feature\Web;
 
-use App\Models\User;
-use App\Models\Supplier;
+use Modules\User\Models\User;
+use Modules\Supplier\Models\Supplier;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use Inertia\Testing\AssertableInertia as Assert; // Importação necessária
@@ -69,7 +69,7 @@ class SupplierTest extends TestCase
         $this->assertDatabaseHas('suppliers', ['cnpj' => '12.345.678/0001-90']);
         
         // Verifica se a sanitização foi aplicada
-        $supplier = \App\Models\Supplier::where('cnpj', '12.345.678/0001-90')->first();
+        $supplier = \Modules\Supplier\Models\Supplier::where('cnpj', '12.345.678/0001-90')->first();
         $this->assertEquals('Fornecedor de Teste LTDA', $supplier->company_name);
         $this->assertEquals('Rua de Teste, 123', $supplier->address);
         $this->assertEquals('Centro', $supplier->neighborhood);

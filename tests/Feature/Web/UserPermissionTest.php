@@ -2,7 +2,7 @@
 
 namespace Tests\Feature\Web;
 
-use App\Models\User;
+use Modules\User\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia as InertiaAssert;
 use PHPUnit\Framework\Attributes\Test;

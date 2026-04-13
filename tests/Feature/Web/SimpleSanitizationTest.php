@@ -2,7 +2,8 @@
 
 namespace Tests\Feature\Web;
 
-use App\Models\User;
+use Modules\User\Models\User;
+use Modules\Supplier\Models\Supplier;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
@@ -113,8 +114,8 @@ class SimpleSanitizationTest extends TestCase
             ->post(route('suppliers.store'), $data);
 
         $response->assertRedirect();
-        
-        $supplier = \App\Models\Supplier::where('cnpj', '12.345.678/0001-90')->first();
+
+        $supplier = \Modules\Supplier\Models\Supplier::where('cnpj', '12.345.678/0001-90')->first();
         $this->assertNotNull($supplier);
         
         // Verifica se os campos foram sanitizados

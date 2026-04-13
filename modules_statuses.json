@@ -1,0 +1,7 @@
+{
+    "Product": true,
+    "Supplier": true,
+    "Client": true,
+    "User": true,
+    "Auth": true
+}

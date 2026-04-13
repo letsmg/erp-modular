@@ -9,15 +9,14 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\Gate;
 
-use App\Models\User;
-use App\Policies\UserPolicy;
+use Modules\User\Models\User;
+use Modules\User\Policies\UserPolicy;
 
-use App\Models\Product;
-use App\Policies\ProductPolicy;
+use Modules\Product\Models\Product;
+use Modules\Product\Policies\ProductPolicy;
 
-use App\Models\Client;
-use App\Policies\ClientPolicy;
-use App\Policies\SelfClientPolicy;
+use Modules\Client\Models\Client;
+use Modules\Client\Policies\ClientPolicy;
 
 use App\Models\ShoppingCart;
 use App\Policies\ShoppingCartPolicy;

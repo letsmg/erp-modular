@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Product;
+use Modules\Product\Models\Product;
 use App\Models\ShoppingCart;
 use App\Repositories\ShoppingCartRepository;
 use Illuminate\Support\Collection;

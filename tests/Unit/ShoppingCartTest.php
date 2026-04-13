@@ -2,9 +2,9 @@
 
 namespace Tests\Unit;
 
-use App\Models\Product;
+use Modules\Product\Models\Product;
 use App\Models\ShoppingCart;
-use App\Models\User;
+use Modules\User\Models\User;
 use App\Repositories\ShoppingCartRepository;
 use App\Services\ShoppingCartService;
 use Illuminate\Foundation\Testing\RefreshDatabase;

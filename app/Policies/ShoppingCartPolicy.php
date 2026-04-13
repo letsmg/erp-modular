@@ -3,7 +3,7 @@
 namespace App\Policies;
 
 use App\Models\ShoppingCart;
-use App\Models\User;
+use Modules\User\Models\User;
 use Illuminate\Auth\Access\Response;
 
 class ShoppingCartPolicy
@@ -94,7 +94,7 @@ class ShoppingCartPolicy
         }
 
         // Verifica se o produto existe e está ativo
-        $product = \App\Models\Product::find($productId);
+        $product = \Modules\Product\Models\Product::find($productId);
         
         if (!$product) {
             return Response::deny('Produto não encontrado.');

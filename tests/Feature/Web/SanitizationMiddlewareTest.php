@@ -2,8 +2,9 @@
 
 namespace Tests\Feature\Web;
 
-use App\Models\User;
-use App\Models\Product;
+use Modules\User\Models\User;
+use Modules\Product\Models\Product;
+use Modules\Supplier\Models\Supplier;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 use PHPUnit\Framework\Attributes\Test;
@@ -67,8 +68,8 @@ class SanitizationMiddlewareTest extends TestCase
             ->post(route('suppliers.store'), $data);
 
         $response->assertRedirect();
-        
-        $supplier = \App\Models\Supplier::where('cnpj', '12.345.678/0001-90')->first();
+
+        $supplier = \Modules\Supplier\Models\Supplier::where('cnpj', '12.345.678/0001-90')->first();
         
         // Verifica se os campos foram sanitizados
         $this->assertEquals('Test Company LTDA', $supplier->company_name);

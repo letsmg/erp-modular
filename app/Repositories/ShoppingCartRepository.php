@@ -4,7 +4,7 @@ namespace App\Repositories;
 
 use App\Helpers\SanitizerHelper;
 use App\Models\ShoppingCart;
-use App\Models\User;
+use Modules\User\Models\User;
 use Illuminate\Support\Collection;
 
 class ShoppingCartRepository

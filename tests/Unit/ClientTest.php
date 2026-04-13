@@ -2,10 +2,10 @@
 
 namespace Tests\Unit;
 
-use App\Models\Client;
-use App\Models\User;
-use App\Repositories\ClientRepository;
-use App\Services\ClientService;
+use Modules\Client\Models\Client;
+use Modules\User\Models\User;
+use Modules\Client\Repositories\ClientRepository;
+use Modules\Client\Services\ClientService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
