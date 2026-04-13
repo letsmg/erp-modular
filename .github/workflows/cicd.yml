@@ -53,21 +53,8 @@ jobs:
             sudo unzip -o /tmp/deploy.zip -d .
             sudo rm /tmp/deploy.zip
 
-            echo "📝 Configurando .env se não existir..."
-            if [ ! -f .env ]; then
-              sudo cp .env.example .env
-              sudo sed -i 's/DB_CONNECTION=sqlite/DB_CONNECTION=pgsql/g' .env
-              sudo sed -i 's/# DB_HOST=127.0.0.1/DB_HOST=127.0.0.1/g' .env
-              sudo sed -i 's/# DB_PORT=3306/DB_PORT=5432/g' .env
-              sudo sed -i 's/# DB_DATABASE=laravel/DB_DATABASE=erp_vue_laravel/g' .env
-              sudo sed -i 's/# DB_USERNAME=root/DB_USERNAME=postgres/g' .env
-              sudo sed -i 's/# DB_PASSWORD=/DB_PASSWORD=123456/g' .env
-              sudo chown www-data:www-data .env
-            fi
-
             echo "� Permissões Iniciais..."
-            sudo chown -R www-data:www-data /var/www/erp-vue-modular
-            sudo chmod -R 775 storage bootstrap/cache
+            sudo chown -R www-data:www-data /var/www/erp-vue-moddular            sudo chmod -R 775 storage bootstrap/cache
 
             echo "🗄️ Database & Cache..."
             # Rodamos como sudo -u www-data para garantir que os logs criados pertençam ao dono certo
@@ -80,8 +67,7 @@ jobs:
             sudo -u www-data php artisan storage:link
 
             echo "🔐 Permissões Finais (Assets)..."
-            sudo chown -R www-data:www-data /var/www/erp-vue-modular
-            sudo chmod -R 775 storage bootstrap/cache public/build
+            sudo chown -R www-data:www-data /var/www/erp-vue-moddular            sudo chmod -R 775 storage bootstrap/cache public/build
             
             echo "🔄 Reiniciando PHP..."
             sudo systemctl restart php8.3-fpm
