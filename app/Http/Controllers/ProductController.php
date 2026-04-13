@@ -37,6 +37,19 @@ class ProductController extends Controller
             'price_min', 'price_max', 'stock_min', 'stock_max'
         ]);
         
+        // API Request - retorna JSON
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'products' => $this->repository->getFiltered($filters),
+                    'filters' => $filters,
+                    'brands' => $this->repository->getAllBrands(),
+                    'categories' => $this->repository->getAllCategories(),
+                ],
+            ]);
+        }
+        
         return Inertia::render('Products/Index', [
             'products' => $this->repository->getFiltered($filters),
             'filters' => $filters,
@@ -61,7 +74,16 @@ class ProductController extends Controller
      */
     public function store(StoreProductRequest $request)
     {
-        $this->service->storeProduct($request->validated(), $request);
+        $product = $this->service->storeProduct($request->validated(), $request);
+        
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Produto cadastrado com sucesso!',
+                'data' => $product,
+            ], 201);
+        }
+        
         return redirect()->route('products.index')->with('message', 'Produto cadastrado!');
     }
 
@@ -86,6 +108,14 @@ class ProductController extends Controller
         $this->authorize('update', $product);
         $this->service->updateProduct($product, $request->all(), $request);
 
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Produto atualizado com sucesso!',
+                'data' => $product->refresh(),
+            ], 200);
+        }
+
         return redirect()->route('products.index')
             ->with('message', 'Produto atualizado com sucesso!');
     }
@@ -98,6 +128,14 @@ class ProductController extends Controller
         $this->authorize('toggle', $product);
 
         $product->update(['is_active' => !$product->is_active]);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Status de ativação atualizado!',
+                'data' => $product->refresh(),
+            ], 200);
+        }
 
         return back()->with('message', 'Status de ativação atualizado!');
     }
@@ -121,20 +159,35 @@ class ProductController extends Controller
     /**
      * Remove o produto e seus arquivos.
      */
-    public function destroy(Product $product)
+    public function destroy(Product $product, Request $request)
     {
         $this->authorize('delete', $product);
 
         $this->service->deleteProduct($product);
+        
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Produto removido com sucesso!',
+            ], 204);
+        }
+        
         return redirect()->route('products.index')->with('message', 'Removido com sucesso.');
     }
 
     /**
      * Renderiza a visualização prévia do produto.
      */
-    public function preview(Product $product)
+    public function preview(Product $product, Request $request)
     {
         $product->load(['supplier', 'images']);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'data' => $product,
+            ], 200);
+        }
 
         return Inertia::render('Products/Preview', [
             'product' => $product

@@ -23,9 +23,10 @@ class AuthTest extends TestCase
         $response = $this->post('/api/v1/login', [
             'email' => 'test@example.com',
             'password' => 'Password@123',
-        ]);
+        ], ['Accept' => 'application/json']);
 
-        // A rota API de login retorna redirect (302) pois usa o mesmo controller da web
+        // A rota API de login ainda retorna 302 pois usa o controller web
+        // Para usar JWT, precisaria implementar middleware específico
         $response->assertStatus(302);
     }
 
@@ -40,9 +41,9 @@ class AuthTest extends TestCase
         $response = $this->post('/api/v1/login', [
             'email' => 'test@example.com',
             'password' => 'WrongPassword',
-        ]);
+        ], ['Accept' => 'application/json']);
 
-        // A rota API de login retorna redirect (302) com erro pois usa o mesmo controller da web
+        // A rota API de login retorna 302 (redirect) pois usa o controller web
         $response->assertStatus(302);
     }
 
@@ -58,10 +59,10 @@ class AuthTest extends TestCase
         $response = $this->post('/api/v1/login', [
             'email' => 'test@example.com',
             'password' => 'Password@123',
-        ]);
+        ], ['Accept' => 'application/json']);
 
-        // A rota API de login retorna redirect (302) com erro pois usa o mesmo controller da web
-        $response->assertStatus(302);
+        // A rota API de login retorna 422 (validation error) pois usa o controller web
+        $response->assertStatus(422);
     }
 
     #[Test]
@@ -72,7 +73,7 @@ class AuthTest extends TestCase
             'email' => 'test@example.com',
         ]);
 
-        $response = $this->actingAs($user)->get('/api/v1/me');
+        $response = $this->actingAs($user)->get('/api/v1/me', ['Accept' => 'application/json']);
 
         // A rota /me retorna JSON com dados do usuário
         $response->assertStatus(200)
@@ -88,10 +89,10 @@ class AuthTest extends TestCase
     #[Test]
     public function guest_cannot_get_user_data()
     {
-        $response = $this->get('/api/v1/me');
+        $response = $this->get('/api/v1/me', ['Accept' => 'application/json']);
 
-        // A rota /me retorna 302 (redirect) em vez de 401 pois o middleware redireciona
-        $response->assertStatus(302);
+        // A rota /me retorna 401 para usuários não autenticados em requisições API
+        $response->assertStatus(401);
     }
 
     #[Test]
@@ -99,7 +100,7 @@ class AuthTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->post('/api/v1/logout');
+        $response = $this->actingAs($user)->post('/api/v1/logout', [], ['Accept' => 'application/json']);
 
         // A rota API de logout retorna JSON
         $response->assertStatus(200)
@@ -112,9 +113,9 @@ class AuthTest extends TestCase
     #[Test]
     public function guest_cannot_logout()
     {
-        $response = $this->post('/api/v1/logout');
+        $response = $this->post('/api/v1/logout', [], ['Accept' => 'application/json']);
 
-        // A rota API de logout retorna 302 (redirect) em vez de 401 pois o middleware redireciona
-        $response->assertStatus(302);
+        // A rota API de logout retorna 401 para usuários não autenticados em requisições API
+        $response->assertStatus(401);
     }
 }

@@ -23,11 +23,11 @@ class UserTest extends TestCase
         $operator = $this->createUser(0);
         $client = User::factory()->create(['access_level' => 2]);
 
-        $this->actingAs($admin)->get('/api/v1/users')->assertStatus(200);
-        $this->actingAs($operator)->get('/api/v1/users')->assertStatus(200);
+        $this->actingAs($admin)->get('/api/v1/users', ['Accept' => 'application/json'])->assertStatus(200);
+        $this->actingAs($operator)->get('/api/v1/users', ['Accept' => 'application/json'])->assertStatus(200);
         
         // Client não tem acesso - verifica se retorna 403 ou 302
-        $response = $this->actingAs($client)->get('/api/v1/users');
+        $response = $this->actingAs($client)->get('/api/v1/users', ['Accept' => 'application/json']);
         $this->assertTrue(in_array($response->status(), [403, 302]));
     }
 
@@ -48,7 +48,7 @@ class UserTest extends TestCase
 
         $response = $this->actingAs($admin)
             ->withSession(['_token' => 'test'])
-            ->post('/api/v1/users', $novoUsuario);
+            ->post('/api/v1/users', $novoUsuario, ['Accept' => 'application/json']);
 
         // Verifica se retorna 201 ou 302
         $this->assertTrue(in_array($response->status(), [201, 302]));
@@ -68,7 +68,7 @@ class UserTest extends TestCase
             'access_level' => $user->access_level,
             'is_active' => $user->is_active,
             '_token' => 'test',
-        ]);
+        ], ['Accept' => 'application/json']);
 
         // Verifica se retorna 200 ou 302
         $this->assertTrue(in_array($response->status(), [200, 302, 500]));
@@ -82,7 +82,7 @@ class UserTest extends TestCase
 
         $response = $this->actingAs($admin)
             ->withSession(['_token' => 'test'])
-            ->delete('/api/v1/users/' . $user->id, ['_token' => 'test']);
+            ->delete('/api/v1/users/' . $user->id, ['_token' => 'test'], ['Accept' => 'application/json']);
 
         // Verifica se retorna 204 ou 302
         $this->assertTrue(in_array($response->status(), [204, 302]));
@@ -95,7 +95,7 @@ class UserTest extends TestCase
         $user = User::factory()->create();
 
         $response = $this->actingAs($admin)
-            ->get('/api/v1/users/' . $user->id);
+            ->get('/api/v1/users/' . $user->id, ['Accept' => 'application/json']);
         // A rota show pode não estar implementada como API, aceita qualquer status para verificar que a rota existe
         $this->assertNotEmpty($response->getContent());
     }
@@ -106,11 +106,11 @@ class UserTest extends TestCase
         $client = User::factory()->create(['access_level' => 2]);
 
         $response = $this->actingAs($client)
-            ->get('/api/v1/users');
+            ->get('/api/v1/users', ['Accept' => 'application/json']);
         $this->assertTrue(in_array($response->status(), [403, 302]));
 
         $response = $this->actingAs($client)
-            ->post('/api/v1/users', []);
+            ->post('/api/v1/users', [], ['Accept' => 'application/json']);
         $this->assertTrue(in_array($response->status(), [403, 302]));
     }
 
@@ -122,7 +122,7 @@ class UserTest extends TestCase
 
         $response = $this->actingAs($operator)
             ->withSession(['_token' => 'test'])
-            ->delete('/api/v1/users/' . $admin->id, ['_token' => 'test']);
+            ->delete('/api/v1/users/' . $admin->id, ['_token' => 'test'], ['Accept' => 'application/json']);
         $this->assertTrue(in_array($response->status(), [403, 204, 302]));
     }
 }

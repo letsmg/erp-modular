@@ -10,10 +10,19 @@ use App\Helpers\SanitizerHelper;
 
 class SupplierController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
+        $suppliers = Supplier::latest()->get();
+        
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'data' => $suppliers,
+            ]);
+        }
+        
         return Inertia::render('Suppliers/Index', [
-            'suppliers' => Supplier::latest()->get()
+            'suppliers' => $suppliers
         ]);
     }
 
@@ -50,7 +59,15 @@ class SupplierController extends Controller
         // Sanitiza todos os dados antes de salvar
         $data = SanitizerHelper::sanitize($data);
 
-        Supplier::create($data);
+        $supplier = Supplier::create($data);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Fornecedor cadastrado com sucesso!',
+                'data' => $supplier,
+            ], 201);
+        }
 
         return redirect()->route('suppliers.index')
             ->with('message', 'Fornecedor cadastrado com sucesso!');
@@ -70,6 +87,15 @@ class SupplierController extends Controller
             $supplier->update([
                 'is_active' => $request->is_active
             ]);
+            
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Status atualizado!',
+                    'data' => $supplier->refresh(),
+                ], 200);
+            }
+            
             return back()->with('message', 'Status atualizado!');
         }
 
@@ -105,13 +131,29 @@ class SupplierController extends Controller
 
         $supplier->update($data);
 
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Fornecedor atualizado com sucesso!',
+                'data' => $supplier->refresh(),
+            ], 200);
+        }
+
         return redirect()->route('suppliers.index')
             ->with('message', 'Fornecedor atualizado com sucesso!');
     }
 
-    public function destroy(Supplier $supplier)
+    public function destroy(Supplier $supplier, Request $request)
     {
         $supplier->delete();
+        
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Fornecedor removido com sucesso!',
+            ], 204);
+        }
+        
         return redirect()->route('suppliers.index')
             ->with('message', 'Fornecedor removido com sucesso!');
     }

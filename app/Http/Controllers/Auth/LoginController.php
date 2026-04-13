@@ -5,19 +5,23 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Services\AuthService;
+use App\Services\JwtService;
 use Inertia\Inertia;
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Requests\Auth\ForgotPasswordRequest;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\JsonResponse;
 
 class LoginController extends Controller
 {
     protected AuthService $service;
+    protected JwtService $jwtService;
 
-    public function __construct(AuthService $service)
+    public function __construct(AuthService $service, JwtService $jwtService)
     {
         $this->service = $service;
+        $this->jwtService = $jwtService;
     }
 
     // Unificamos showLogin e showLoginForm aqui
@@ -56,10 +60,57 @@ class LoginController extends Controller
         ]);
     }
 
+    // API Login - Retorna JSON com token JWT
+    public function apiLogin(Request $request): JsonResponse
+    {
+        $credentials = $request->validate([
+            'email' => ['required', 'email'],
+            'password' => ['required'],
+        ]);
+
+        if (auth()->attempt($credentials)) {
+            $user = auth()->user();
+            
+            if (!$user->is_active) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Conta inativa.',
+                ], 401);
+            }
+
+            $token = $this->jwtService->generateToken($user);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Login realizado com sucesso.',
+                'data' => [
+                    'token' => $token,
+                    'user' => $user,
+                ],
+            ], 200);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Credenciais inválidas.',
+        ], 401);
+    }
+
     public function logout(Request $request): RedirectResponse
     {
         $this->service->logout($request);
         return redirect('/');
+    }
+
+    // API Logout - Retorna JSON
+    public function apiLogout(Request $request): JsonResponse
+    {
+        auth()->logout();
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Logout realizado com sucesso.',
+        ], 200);
     }
 
     public function showForgotPassword()

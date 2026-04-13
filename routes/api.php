@@ -26,7 +26,7 @@ Route::prefix('v1')->group(function () {
     |--------------------------------------------------------------------------
     */
     
-    Route::post('/login', [LoginController::class, 'login'])->name('api.login');
+    Route::post('/login', [LoginController::class, 'apiLogin'])->name('api.login');
     
     /*
     |--------------------------------------------------------------------------
@@ -163,12 +163,6 @@ Route::prefix('v1')->group(function () {
             ]);
         })->name('api.me');
         
-        Route::post('/logout', function () {
-            Auth::logout();
-            return response()->json([
-                'success' => true,
-                'message' => 'Logout realizado com sucesso.',
-            ]);
-        })->name('api.logout');
+        Route::post('/logout', [LoginController::class, 'apiLogout'])->name('api.logout');
     });
 });

@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use App\Http\Requests\User\StoreUserRequest;
 use App\Http\Requests\User\UpdateUserRequest;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
@@ -21,11 +22,18 @@ class UserController extends Controller
         $this->service = $service;
     }
 
-    public function index()
+    public function index(Request $request)
     {
         $this->authorize('viewAny', User::class);
 
         $users = $this->service->list(auth()->user());
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'data' => $users,
+            ]);
+        }
 
         return Inertia::render('Users/Index', compact('users'));
     }
@@ -41,7 +49,15 @@ class UserController extends Controller
     {
         $this->authorize('create', User::class);
 
-        $this->service->create($request->validated());
+        $user = $this->service->create($request->validated());
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Usuário criado com sucesso!',
+                'data' => $user,
+            ], 201);
+        }
 
         return redirect()->route('users.index')
             ->with('message', 'Usuário criado com sucesso!');
@@ -60,33 +76,64 @@ class UserController extends Controller
 
         $this->service->update($user, $request->validated());
 
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Usuário atualizado!',
+                'data' => $user->refresh(),
+            ], 200);
+        }
+
         return redirect()->route('users.index')
             ->with('message', 'Usuário atualizado!');
     }
 
-    public function toggleStatus(User $user): RedirectResponse
+    public function toggleStatus(User $user, Request $request)
     {
         $this->authorize('toggleStatus', $user);
 
         $this->service->toggleStatus($user, auth()->user());
 
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Status atualizado!',
+                'data' => $user->refresh(),
+            ], 200);
+        }
+
         return back()->with('message', 'Status atualizado!');
     }
 
-    public function resetPassword(User $user): RedirectResponse
+    public function resetPassword(User $user, Request $request)
     {
         $this->authorize('resetPassword', $user);
 
         $this->service->resetPassword($user);
 
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Senha resetada para: Mudar@123',
+                'data' => $user->refresh(),
+            ], 200);
+        }
+
         return back()->with('message', 'Senha resetada para: Mudar@123');
     }
 
-    public function destroy(User $user): RedirectResponse
+    public function destroy(User $user, Request $request)
     {
         $this->authorize('delete', $user);
 
         $this->service->delete($user, auth()->user());
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Usuário excluído!',
+            ], 204);
+        }
 
         return redirect()->route('users.index')
             ->with('message', 'Usuário excluído!');

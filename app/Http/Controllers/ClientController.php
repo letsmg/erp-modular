@@ -28,6 +28,16 @@ class ClientController extends Controller
         $filters = $request->only(['search', 'document_type', 'is_active', 'contributor_type', 'active', 'blocked']);
         $clients = $this->repository->getFiltered($filters);
 
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'clients' => $clients,
+                    'filters' => $filters,
+                ],
+            ]);
+        }
+
         return inertia('Clients/Index', [
             'clients' => $clients,
             'filters' => $filters,
@@ -55,9 +65,23 @@ class ClientController extends Controller
             $data = $request->validated();
             $client = $this->service->create($data);
 
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Cliente cadastrado com sucesso!',
+                    'data' => $client,
+                ], 201);
+            }
+
             return redirect()->route('clients.index')
                 ->with('success', 'Cliente cadastrado com sucesso!');
         } catch (\Exception $e) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erro ao cadastrar cliente: ' . $e->getMessage(),
+                ], 500);
+            }
             return back()
                 ->withInput()
                 ->with('error', 'Erro ao cadastrar cliente: ' . $e->getMessage());
@@ -67,13 +91,20 @@ class ClientController extends Controller
     /**
      * Mostra detalhes do cliente.
      */
-    public function show(Client $client)
+    public function show(Client $client, Request $request)
     {
         $this->authorize('view', $client);
 
         $client->load(['user', 'addresses', 'sales' => function ($query) {
             $query->orderBy('created_at', 'desc')->limit(10);
         }]);
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'data' => $client,
+            ], 200);
+        }
 
         return inertia('Clients/Show', [
             'client' => $client,
@@ -110,9 +141,23 @@ class ClientController extends Controller
                 $updatedClient = $this->repository->update($client, $data);
             }
 
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Cliente atualizado com sucesso!',
+                    'data' => $updatedClient->refresh(),
+                ], 200);
+            }
+
             return redirect()->route('clients.index')
                 ->with('success', 'Cliente atualizado com sucesso!');
         } catch (\Exception $e) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erro ao atualizar cliente: ' . $e->getMessage(),
+                ], 500);
+            }
             return back()
                 ->withInput()
                 ->with('error', 'Erro ao atualizar cliente: ' . $e->getMessage());
@@ -122,7 +167,7 @@ class ClientController extends Controller
     /**
      * Ativa/Inativa cliente.
      */
-    public function toggleStatus(Client $client)
+    public function toggleStatus(Client $client, Request $request)
     {
         $this->authorize('update', $client);
 
@@ -130,9 +175,23 @@ class ClientController extends Controller
             $newStatus = !$client->is_active;
             $this->repository->update($client, ['is_active' => $newStatus]);
 
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => "Cliente " . ($newStatus ? 'ativado' : 'inativado') . " com sucesso!",
+                    'data' => $client->refresh(),
+                ], 200);
+            }
+
             return redirect()->route('clients.index')
                 ->with('success', "Cliente " . ($newStatus ? 'ativado' : 'inativado') . " com sucesso!");
         } catch (\Exception $e) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erro ao alterar status: ' . $e->getMessage(),
+                ], 500);
+            }
             return back()->with('error', 'Erro ao alterar status: ' . $e->getMessage());
         }
     }
@@ -140,16 +199,29 @@ class ClientController extends Controller
     /**
      * Exclui cliente.
      */
-    public function destroy(Client $client)
+    public function destroy(Client $client, Request $request)
     {
         $this->authorize('delete', $client);
 
         try {
             $this->repository->delete($client);
 
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Cliente excluído com sucesso!',
+                ], 204);
+            }
+
             return redirect()->route('clients.index')
                 ->with('success', 'Cliente excluído com sucesso!');
         } catch (\Exception $e) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Erro ao excluir cliente: ' . $e->getMessage(),
+                ], 500);
+            }
             return back()->with('error', 'Erro ao excluir cliente: ' . $e->getMessage());
         }
     }
