@@ -34,7 +34,7 @@ class AddressSeeder extends Seeder
                         'street' => $street,
                         'number' => $number,
                         'complement' => fake()->secondaryAddress(),
-                        'neighborhood' => fake()->neighborhood(),
+                        'neighborhood' => fake()->city(),
                         'city' => fake()->city(),
                         'state' => fake()->stateAbbr(),
                         'zip_code' => fake()->postcode(),
